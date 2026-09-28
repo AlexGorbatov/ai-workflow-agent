@@ -1,0 +1,11 @@
+# Tests never call a model API: no chat model is created here, and StubChatModelConfiguration
+# supplies the only ChatModel bean.
+spring:
+  ai:
+    model:
+      chat: none
+    openai:
+      api-key: not-used-in-tests
+  datasource:
+    # Replaced by the Testcontainers @ServiceConnection; set only so the main placeholder resolves.
+    password: not-used-in-tests

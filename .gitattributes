@@ -1,0 +1,15 @@
+* text=auto eol=lf
+
+/mvnw text eol=lf
+*.sh text eol=lf
+*.cmd text eol=crlf
+*.bat text eol=crlf
+
+# Stored with LF; scripts/send-mail.sh converts to CRLF on the wire (curl --crlf).
+*.eml text eol=lf
+
+*.jar binary
+*.png binary
+*.gif binary
+*.jpg binary
+*.mp4 binary

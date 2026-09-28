@@ -1,0 +1,77 @@
+# Default profile = OpenAI against the infrastructure from compose.yaml (docker compose up -d).
+# Secrets are placeholders without defaults: a missing one fails at startup instead of running wrong.
+server:
+  port: 8080
+
+spring:
+  application:
+    name: agent-app
+  threads:
+    virtual:
+      enabled: true
+
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:workflow}
+    username: ${POSTGRES_USER:workflow}
+    password: ${POSTGRES_PASSWORD}
+
+  # Flyway owns the schema; Hibernate only checks that entities match it.
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    locations: classpath:db/migration
+
+  ai:
+    # Only the chat model is used. Everything else from the OpenAI starter stays off, so no bean
+    # demands credentials we never use.
+    model:
+      chat: openai
+      embedding: none
+      image: none
+      audio:
+        speech: none
+        transcription: none
+      moderation: none
+    openai:
+      api-key: ${OPENAI_API_KEY}
+      # Model calls are bounded: a hung provider must not hold a workflow step for minutes.
+      timeout: ${OPENAI_TIMEOUT:30s}
+      max-retries: ${OPENAI_MAX_RETRIES:2}
+      chat:
+        timeout: ${OPENAI_TIMEOUT:30s}
+        max-retries: ${OPENAI_MAX_RETRIES:2}
+        max-completion-tokens: ${OPENAI_MAX_COMPLETION_TOKENS:1000}
+    # Prompts and completions carry customer email text: never log them. Defaults, set explicitly
+    # so turning one on is a visible change.
+    chat:
+      observations:
+        log-prompt: false
+        log-completion: false
+      client:
+        observations:
+          log-prompt: false
+          log-completion: false
+
+  # The token's "iss" must equal this exactly; defaults point at the realm from compose.yaml.
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${OAUTH2_ISSUER_URI:http://localhost:8180/realms/workflow}
+          audiences: ${OAUTH2_AUDIENCE:workflow-api}
+
+# health (with liveness/readiness probes, status only) and info. env, configprops and heapdump
+# would expose secrets and email content.
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
+      show-components: never
+      probes:
+        enabled: true

@@ -1,0 +1,42 @@
+### Requests for the IntelliJ HTTP Client / VS Code REST Client.
+### Start the stack first: docker compose up -d, then ./mvnw -pl agent-app spring-boot:test-run
+
+@keycloak = http://localhost:8180
+@agent = http://localhost:8080
+
+### Token as operator (olena)
+# @name tokenOlena
+POST {{keycloak}}/realms/workflow/protocol/openid-connect/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=password&client_id=workflow-web&username=olena&password=olena
+
+> {% client.global.set("olena_token", response.body.access_token); %}
+
+### Token as approver (max)
+# @name tokenMax
+POST {{keycloak}}/realms/workflow/protocol/openid-connect/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=password&client_id=workflow-web&username=max&password=max
+
+> {% client.global.set("max_token", response.body.access_token); %}
+
+### agent-app health (public)
+GET {{agent}}/actuator/health
+
+### agent-app without a token -> 401
+GET {{agent}}/api/v1/instances
+
+### agent-app with a token -> 404 until M1 adds the instances API
+GET {{agent}}/api/v1/instances
+Authorization: Bearer {{olena_token}}
+
+### mock-crm-mcp health
+GET http://localhost:8091/actuator/health
+
+### mock-rates health
+GET http://localhost:8092/actuator/health
+
+### Mailpit: latest messages (inbound requests and agent replies)
+GET http://localhost:8025/api/v1/messages?limit=10

@@ -1,0 +1,6 @@
+# Demo profile: active in spring-boot:test-run, never in the automated test suite.
+# It does not change the model. Later milestones add the Mailpit inbox poller (M1) and short timers
+# (follow-up after minutes instead of days, M6) here.
+logging:
+  level:
+    com.altronixsoft.workflow: DEBUG

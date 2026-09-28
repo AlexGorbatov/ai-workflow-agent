@@ -1,0 +1,15 @@
+server:
+  port: 8092
+
+spring:
+  application:
+    name: mock-rates
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never

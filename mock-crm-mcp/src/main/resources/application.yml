@@ -1,0 +1,25 @@
+server:
+  port: 8091
+
+spring:
+  application:
+    name: mock-crm-mcp
+  ai:
+    mcp:
+      server:
+        name: mock-crm
+        version: 0.1.0
+        instructions: "In-memory CRM test double for ai-workflow-agent. WRITE tools require approvalToken and idempotencyKey."
+        type: sync
+        protocol: streamable
+        streamable-http:
+          mcp-endpoint: /mcp
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
