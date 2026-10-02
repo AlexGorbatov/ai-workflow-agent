@@ -267,7 +267,7 @@ public sealed interface StepResult {
   или человеком (`issued_by = user:<sub>`). Коммуникационные эффекты (уточнение, follow-up)
   одобряются политикой всегда, но тоже получают токен — путь один для всех write.
 - Привязан к `instanceId`, `action` и `payloadHash` (SHA-256 канонического JSON аргументов);
-  подписан HMAC-SHA256 секретом `WORKFLOW_APPROVAL_SECRET`; имеет срок жизни.
+  подписан HMAC-SHA256 секретом `APPROVAL_TOKEN_SECRET`; имеет срок жизни.
 - Гейтвей проверяет подпись, срок, совпадение hash и то, что токен не использован другим idempotency
   key. Повтор с тем же ключом допустим, иначе ретраи после сбоя были бы невозможны.
 
@@ -315,7 +315,7 @@ public sealed interface StepResult {
 - Моки без аутентификации: это локальные тестовые двойники, порты публикуются только на `localhost`.
   CRM записывает approval token и idempotency key, но проверять токен — работа ToolGateway.
 - Секреты — только через переменные окружения без значений по умолчанию в default-профиле:
-  `OPENAI_API_KEY`, `WORKFLOW_APPROVAL_SECRET`. В git — только `.env.example`.
+  `OPENAI_API_KEY`, `APPROVAL_TOKEN_SECRET`. В git — только `.env.example`.
 - PII: тела писем хранятся в БД, но не попадают в логи. В логах — только id. Логирование промптов в
   observations Spring AI выключено явно.
 
