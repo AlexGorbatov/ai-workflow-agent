@@ -13,3 +13,24 @@ management:
   endpoint:
     health:
       show-details: never
+
+# Lanes between the cities in samples/emails (both directions) and three carriers.
+# cost = baseEurPerKm * km + perKgEurPerKm * km * weightKg;  days = ceil(km / kmPerDay)
+rates:
+  simulate:
+    slow-delay: 8s
+  carriers:
+    - { name: FastFreight, base-eur-per-km: 0.30, per-kg-eur-per-km: 0.00012, km-per-day: 700 }
+    - { name: EuroLine, base-eur-per-km: 0.25, per-kg-eur-per-km: 0.00010, km-per-day: 550 }
+    - { name: BudgetTrans, base-eur-per-km: 0.20, per-kg-eur-per-km: 0.00009, km-per-day: 400 }
+  lanes:
+    - { a: warszawa, b: berlin, distance-km: 575 }
+    - { a: goteborg, b: madrid, distance-km: 3000 }
+    - { a: lodz, b: praha, distance-km: 560 }
+    - { a: milano, b: lyon, distance-km: 440 }
+    - { a: duisburg, b: rotterdam, distance-km: 230 }
+    - { a: valencia, b: lyon, distance-km: 880 }
+    - { a: hamburg, b: wien, distance-km: 1000 }
+    - { a: kyiv, b: wroclaw, distance-km: 1150 }
+    - { a: verona, b: munchen, distance-km: 450 }
+    - { a: poznan, b: hamburg, distance-km: 600 }

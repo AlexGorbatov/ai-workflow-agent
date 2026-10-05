@@ -10,7 +10,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.test.web.servlet.MockMvc;
 
-@SpringBootTest
+@SpringBootTest(properties = "approval.token.secret=crm-test-secret-that-is-long-enough-0123456789")
 @AutoConfigureMockMvc
 class MockCrmApplicationIT {
 

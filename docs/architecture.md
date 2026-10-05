@@ -1,7 +1,8 @@
 # Architecture
 
-Diagrams for [GUIDE_RU.md §3–4](GUIDE_RU.md#3-архитектура). The guide is authoritative; if a diagram
-disagrees with it, fix the diagram.
+Diagrams for [GUIDE_RU.md §3–4](GUIDE_RU.md#3-архитектура). The state machine below follows the code
+(`QuoteState`, `StepResult`, `Signal`); GUIDE_RU.md §4.1–4.2 still lists the earlier state names, see its
+[§4.0](GUIDE_RU.md#40-актуальная-машина-состояний).
 
 ## Components
 
@@ -100,51 +101,64 @@ sequenceDiagram
 
 ## State machine
 
+The state means **which step runs next** (or what the instance is waiting for). It is the `QuoteState`
+enum in `agent-app/.../quote/QuoteState.java`; the transitions below are what `WorkflowEngine` applies
+from `StepResult` and `Signal` (`engine/`).
+
 ```mermaid
 stateDiagram-v2
-    [*] --> UNDERSTANDING: new email
+    [*] --> RECEIVED: new email (engine.start)
 
-    UNDERSTANDING --> ENRICHING: complete request
-    UNDERSTANDING --> AWAITING_CUSTOMER_INFO: missing fields / clarification sent
-    UNDERSTANDING --> RECORDING: reply ACCEPTS / DECLINES
-    UNDERSTANDING --> COMPLETED: OTHER → NOT_A_REQUEST<br/>question or 2 clarifications → HANDED_OFF
+    RECEIVED --> UNDERSTOOD: Understand — complete request
+    RECEIVED --> AWAIT_REPLY: Understand — fields missing, clarification queued
+    RECEIVED --> CLOSED: Understand — not a quote request
 
-    AWAITING_CUSTOMER_INFO --> UNDERSTANDING: customer replied
-    AWAITING_CUSTOMER_INFO --> COMPLETED: timeout → NO_RESPONSE
+    AWAIT_REPLY --> RECEIVED: CustomerReplied
+    AWAIT_REPLY --> CLOSED: timeout → NO_RESPONSE
 
-    ENRICHING --> PRICING
-    PRICING --> POLICY_CHECK
-    PRICING --> COMPLETED: lane not served → HANDED_OFF
+    UNDERSTOOD --> ENRICHED: Enrich (CRM read)
+    UNDERSTOOD --> INVESTIGATING: ambiguous customer
+    ENRICHED --> PRICED: Price (code)
+    ENRICHED --> INVESTIGATING: no rates
 
-    POLICY_CHECK --> RESPONDING: AUTO_APPROVE (policy token)
-    POLICY_CHECK --> AWAITING_APPROVAL: REQUIRE_APPROVAL
+    PRICED --> APPROVED: Policy — auto (policy token)
+    PRICED --> AWAIT_APPROVAL: Policy — approval required
 
-    AWAITING_APPROVAL --> RESPONDING: approved (user token) / rejected (DECLINE mode)
-    AWAITING_APPROVAL --> AWAITING_APPROVAL: SLA overdue
+    INVESTIGATING --> AWAIT_APPROVAL: Investigator (LLM, read-only)
 
-    RESPONDING --> RECORDING: quote email queued
-    RESPONDING --> COMPLETED: decline email queued → REJECTED_BY_US
+    AWAIT_APPROVAL --> APPROVED: Approved (user token, price)
+    AWAIT_APPROVAL --> CLOSED: Rejected → REJECTED
+    AWAIT_APPROVAL --> UNDERSTOOD: Retry(from)
+    AWAIT_APPROVAL --> ENRICHED: Retry(from)
 
-    RECORDING --> AWAITING_CUSTOMER_REPLY: quote written to CRM
-    RECORDING --> COMPLETED: status written → QUOTE_ACCEPTED / QUOTE_DECLINED / QUOTE_EXPIRED
+    APPROVED --> RESPONDED: Respond (LLM + numeric guard, reply queued in outbox)
+    RESPONDED --> FOLLOW_UP: Record (CRM write)
 
-    AWAITING_CUSTOMER_REPLY --> UNDERSTANDING: customer replied
-    AWAITING_CUSTOMER_REPLY --> AWAITING_CUSTOMER_REPLY: follow-up sent (once)
-    AWAITING_CUSTOMER_REPLY --> RECORDING: validUntil passed
+    FOLLOW_UP --> FOLLOW_UP: timeout → one reminder
+    FOLLOW_UP --> CLOSED: timeout → NO_RESPONSE
+    FOLLOW_UP --> CLOSED: CustomerReplied → CUSTOMER_REPLIED
 
-    UNDERSTANDING --> NEEDS_ATTENTION: retries exhausted
-    ENRICHING --> NEEDS_ATTENTION: retries exhausted
-    PRICING --> NEEDS_ATTENTION: retries exhausted
-    RESPONDING --> NEEDS_ATTENTION: retries exhausted
-    RECORDING --> NEEDS_ATTENTION: outbox FAILED
-    NEEDS_ATTENTION --> UNDERSTANDING: operator retry (back to failed state)
+    RECEIVED --> EXCEPTION: retries exhausted
+    UNDERSTOOD --> EXCEPTION: retries exhausted
+    ENRICHED --> EXCEPTION: retries exhausted
+    PRICED --> EXCEPTION: retries exhausted
+    APPROVED --> EXCEPTION: retries exhausted
+    RESPONDED --> EXCEPTION: retries exhausted
 
-    NEEDS_ATTENTION --> CANCELLED: operator cancel
-    AWAITING_APPROVAL --> CANCELLED: operator cancel
-
-    COMPLETED --> [*]
-    CANCELLED --> [*]
+    CLOSED --> [*]
+    EXCEPTION --> [*]
 ```
 
-`NEEDS_ATTENTION → retry` returns to whichever state failed (`failed_state`); the diagram shows one
-edge for readability. Cancel is allowed from every non-terminal state.
+Waiting states are `AWAIT_REPLY`, `AWAIT_APPROVAL` and `FOLLOW_UP`; terminal states are `CLOSED` (with
+a `closeReason`) and `EXCEPTION`. A step failure is retried by the engine (`2^attempt` seconds, three
+attempts) before the instance lands in `EXCEPTION`.
+
+Signal table (implemented in M1, T1.5):
+
+| State | Signal | Next state | Context change |
+|---|---|---|---|
+| `AWAIT_REPLY` | `CustomerReplied` | `RECEIVED` | reply appended to `replies` |
+| `AWAIT_APPROVAL` | `Approved` | `APPROVED` | `approvalToken` set, quote carries the approver's price |
+| `AWAIT_APPROVAL` | `Rejected` | `CLOSED` | `closeReason = REJECTED` |
+| `AWAIT_APPROVAL` | `Retry(from)` | `UNDERSTOOD` or `ENRICHED` | `error` and `investigation` cleared |
+| `FOLLOW_UP` | `CustomerReplied` | `CLOSED` | `closeReason = CUSTOMER_REPLIED` |

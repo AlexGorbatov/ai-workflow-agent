@@ -18,9 +18,11 @@
     <description>AI Business Workflow Agent: email freight requests to approved quotes on a durable state machine</description>
 
     <modules>
-        <module>agent-app</module>
+        <module>approval-token</module>
+        <!-- The mocks build before agent-app: its integration tests start their executable jars. -->
         <module>mock-crm-mcp</module>
         <module>mock-rates</module>
+        <module>agent-app</module>
     </modules>
 
     <properties>
@@ -46,6 +48,11 @@
                 <groupId>com.github.kagkarlsson</groupId>
                 <artifactId>db-scheduler-spring-boot-4-starter</artifactId>
                 <version>${db-scheduler.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.altronixsoft</groupId>
+                <artifactId>approval-token</artifactId>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.tngtech.archunit</groupId>

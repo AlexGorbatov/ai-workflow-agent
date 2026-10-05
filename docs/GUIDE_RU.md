@@ -4,6 +4,11 @@
 > (README, SPEC, milestones, CLAUDE.md) прав этот файл — исправляйте тот документ.
 > Меняется только осознанно: через PR, с обновлением зависимых документов в том же PR.
 
+> **Состояния и движок.** Актуальная машина состояний — `QuoteState` и контракт `Step`/`StepResult`/
+> `Signal` в коде (`agent-app/.../quote`, `.../engine`); сводка и соответствие старым названиям — в
+> [§4.0](#40-актуальная-машина-состояний). Старые названия состояний в §2.2, §3.4, §4.1–4.2, §5.4 и
+> §9 устарели — читайте их через таблицу соответствия.
+
 Содержание:
 [1. Продукт](#1-продукт) ·
 [2. Сценарии и данные](#2-сценарии-и-тестовые-данные) ·
@@ -152,6 +157,7 @@ LLM делает только то, в чём он силён: понимает 
 | `engine` | durable state machine: `WorkflowInstance`, `Step`, `StepResult`, применение результата в одной транзакции, db-scheduler | M1 |
 | `llm` | шаги Understand, Respond, Investigator; промпты; structured output; numeric guard | M2, M4, M6 |
 | `tools` | `ToolGateway`: единственная точка вызова внешних систем (MCP CRM, REST rates, SMTP) | M3, M4 |
+| `enrich` | шаг Enrich: клиент из CRM, флаги `NEW_CUSTOMER`/`CREDIT_HOLD`, только через `ToolGateway` | M3 |
 | `quote` | детерминированный расчёт цены (`BigDecimal`) | M3 |
 | `policy` | загрузка и вычисление YAML-политики | M4 |
 | `approval` | approval requests, решения людей, approval tokens (HMAC) | M4, M5 |
@@ -347,7 +353,38 @@ public sealed interface StepResult {
 
 ## 4. Состояния и переходы
 
-### 4.1 Состояния
+### 4.0 Актуальная машина состояний
+
+Состояние = «какой шаг выполнить следующим» либо «чего ждём». Двенадцать значений `QuoteState`:
+`RECEIVED`, `AWAIT_REPLY`, `UNDERSTOOD`, `ENRICHED`, `PRICED`, `AWAIT_APPROVAL`, `APPROVED`,
+`RESPONDED`, `FOLLOW_UP`, `INVESTIGATING`, `CLOSED`, `EXCEPTION`. Ожидания: `AWAIT_REPLY`,
+`AWAIT_APPROVAL`, `FOLLOW_UP`. Финалы: `CLOSED` (с `closeReason`) и `EXCEPTION`. Диаграмма и таблица
+сигналов — в [architecture.md](architecture.md#state-machine).
+
+Результат шага — `StepResult.Next | Wait | Fail`, внешнее событие — `Signal.CustomerReplied | Approved |
+Rejected | Retry`. Движок повторяет упавший шаг (`2^attempt` секунд, три попытки), затем `EXCEPTION`.
+
+| В старом тексте (§4.1–4.2) | Сейчас |
+|---|---|
+| `UNDERSTANDING` | `RECEIVED` (его обрабатывает Understand) |
+| `AWAITING_CUSTOMER_INFO` | `AWAIT_REPLY` |
+| `ENRICHING` | `UNDERSTOOD` (его обрабатывает Enrich) → `ENRICHED` |
+| `PRICING` | `ENRICHED` (Price) → `PRICED` |
+| `POLICY_CHECK` | `PRICED` (Policy) |
+| `AWAITING_APPROVAL` | `AWAIT_APPROVAL` |
+| `RESPONDING` | `APPROVED` (Respond) → `RESPONDED` |
+| `RECORDING` | `RESPONDED` (Record) |
+| `AWAITING_CUSTOMER_REPLY` | `FOLLOW_UP` |
+| `NEEDS_ATTENTION` | `INVESTIGATING` (расследование) и `EXCEPTION` (исчерпаны ретраи) |
+| `COMPLETED(outcome)` | `CLOSED` с `closeReason` |
+| `CANCELLED` | нет; отмена оператором не входит в текущий дизайн |
+
+Что в старом дизайне пока не реализовано и вернётся, только если появится тикет: режим `DECLINE`
+после reject (сейчас `Rejected` закрывает инстанс), обработка `ACCEPTS`/`DECLINES` и истечения
+котировки, `Cancel` оператора, возврат в «состояние до сбоя» из `EXCEPTION`, lease у outbox. Формулы
+цены и YAML-политика из §5 остаются ориентиром для M4, но их детали сверяйте с кодом.
+
+### 4.1 Состояния (прежняя редакция, устарела — см. 4.0)
 
 | Состояние | Тип | Что происходит |
 |---|---|---|
@@ -367,7 +404,7 @@ public sealed interface StepResult {
 `outcome` для `COMPLETED`: `QUOTE_ACCEPTED`, `QUOTE_DECLINED`, `QUOTE_EXPIRED`, `REJECTED_BY_US`,
 `NOT_A_REQUEST`, `NO_RESPONSE`, `HANDED_OFF`.
 
-### 4.2 Переходы
+### 4.2 Переходы (прежняя редакция, устарела — см. 4.0)
 
 | Из | Условие | В | Эффекты / таймеры |
 |---|---|---|---|
