@@ -30,3 +30,7 @@ workflow:
     poll-enabled: false
   outbox:
     relay-enabled: false
+    retry-backoff-base: 50ms
+  # Tests bring only the steps they need.
+  registry:
+    require-all-states: false

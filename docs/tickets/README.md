@@ -11,7 +11,7 @@
 | [M3](M3-tools.md) | MCP, Tool Gateway, approval token | сделано (T3.1–T3.6) |
 | [M4](M4-pricing-policy.md) | Цена, правила, Investigator | сделано (T4.1–T4.4) |
 | [M5](M5-approvals.md) | Approvals, роли, SLA, UI | сделано (T5.1–T5.6) |
-| [M6](M6-respond-record.md) | Ответ, CRM, follow-up | не начато |
+| [M6](M6-respond-record.md) | Ответ, CRM, follow-up | сделано (T6.1–T6.5) |
 | [M7](M7-observability-evals.md) | Наблюдаемость и evals | не начато |
 | [M8](M8-packaging.md) | README, ADR, видео | не начато |
 

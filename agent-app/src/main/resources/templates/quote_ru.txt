@@ -1,0 +1,15 @@
+Subject: Ваше предложение на перевозку: {origin} - {destination}
+Здравствуйте, {customer}!
+
+Спасибо за запрос. Наше предложение:
+
+Маршрут: {origin} - {destination}
+Груз: {pallets} паллет, {weightKg} кг, {cargoType}
+Забор груза: {pickupDate}
+Срок доставки: {transitDays} дн.
+Цена: {price} {currency}, всё включено
+
+Предложение действительно до {validUntil}. Чтобы забронировать, просто ответьте на это письмо.
+
+С уважением,
+Nordline Logistics

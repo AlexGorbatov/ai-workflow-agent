@@ -18,6 +18,9 @@ import org.springframework.stereotype.Component;
 @Component
 public class WorkflowScheduler {
 
+    /** How many rounds one wait can have: the first timer and the one after a follow-up reminder. */
+    static final int MAX_ROUNDS = 2;
+
     private final ObjectProvider<SchedulerClient> client;
     private final OneTimeTask<Void> advanceTask;
     private final OneTimeTask<String> timeoutTask;
@@ -44,19 +47,29 @@ public class WorkflowScheduler {
 
     /** Replaces an earlier timer for the same instance and state. */
     public void scheduleTimeout(UUID instanceId, QuoteState state, Instant at) {
+        scheduleTimeout(instanceId, state, 1, at);
+    }
+
+    /**
+     * A later round of the same wait (the wait after a follow-up reminder). It needs its own id: it is set while
+     * the first timer is still running, and db-scheduler removes that one when it completes.
+     */
+    public void scheduleTimeout(UUID instanceId, QuoteState state, int round, Instant at) {
         SchedulerClient scheduler = client.getObject();
-        TaskInstance<String> timer = timeoutTask.instance(timeoutKey(instanceId, state), state.name());
+        TaskInstance<String> timer = timeoutTask.instance(timeoutKey(instanceId, state, round), state.name());
         if (!scheduler.scheduleIfNotExists(timer, at)) {
-            scheduler.reschedule(timeoutId(instanceId, state), at);
+            scheduler.reschedule(timeoutId(instanceId, state, round), at);
         }
     }
 
-    /** Idempotent: a timer that already fired or was never set is not an error. */
+    /** Cancels every round of the wait. Idempotent: a timer that already fired or was never set is not an error. */
     public void cancelTimeout(UUID instanceId, QuoteState state) {
-        try {
-            client.getObject().cancel(timeoutId(instanceId, state));
-        } catch (TaskInstanceNotFoundException alreadyGone) {
-            // nothing to cancel
+        for (int round = 1; round <= MAX_ROUNDS; round++) {
+            try {
+                client.getObject().cancel(timeoutId(instanceId, state, round));
+            } catch (TaskInstanceNotFoundException alreadyGone) {
+                // nothing to cancel
+            }
         }
     }
 
@@ -67,16 +80,21 @@ public class WorkflowScheduler {
     }
 
     public boolean isTimeoutScheduled(UUID instanceId, QuoteState state) {
+        return isTimeoutScheduled(instanceId, state, 1);
+    }
+
+    public boolean isTimeoutScheduled(UUID instanceId, QuoteState state, int round) {
         return client.getObject()
-                .getScheduledExecution(timeoutId(instanceId, state))
+                .getScheduledExecution(timeoutId(instanceId, state, round))
                 .isPresent();
     }
 
-    private static TaskInstanceId timeoutId(UUID instanceId, QuoteState state) {
-        return TaskInstanceId.of(SchedulerTasks.TIMEOUT, timeoutKey(instanceId, state));
+    private static TaskInstanceId timeoutId(UUID instanceId, QuoteState state, int round) {
+        return TaskInstanceId.of(SchedulerTasks.TIMEOUT, timeoutKey(instanceId, state, round));
     }
 
-    private static String timeoutKey(UUID instanceId, QuoteState state) {
-        return instanceId + ":" + state.name();
+    /** Round 1 keeps the original form {@code instanceId:STATE}; later rounds add {@code :N}. */
+    private static String timeoutKey(UUID instanceId, QuoteState state, int round) {
+        return instanceId + ":" + state.name() + (round == 1 ? "" : ":" + round);
     }
 }

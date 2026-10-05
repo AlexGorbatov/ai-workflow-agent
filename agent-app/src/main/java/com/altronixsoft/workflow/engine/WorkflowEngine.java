@@ -3,12 +3,14 @@ package com.altronixsoft.workflow.engine;
 import com.altronixsoft.workflow.quote.QuoteContext;
 import com.altronixsoft.workflow.quote.QuoteState;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -34,6 +36,7 @@ public class WorkflowEngine implements InstanceRunner {
     private final ApplicationEventPublisher events;
     private final Clock clock;
     private final EngineProperties properties;
+    private final ObjectProvider<FollowUpHandler> followUps;
 
     WorkflowEngine(
             WorkflowInstanceRepository instances,
@@ -43,7 +46,8 @@ public class WorkflowEngine implements InstanceRunner {
             TransactionTemplate tx,
             ApplicationEventPublisher events,
             Clock clock,
-            EngineProperties properties) {
+            EngineProperties properties,
+            ObjectProvider<FollowUpHandler> followUps) {
         this.instances = instances;
         this.executions = executions;
         this.registry = registry;
@@ -52,6 +56,7 @@ public class WorkflowEngine implements InstanceRunner {
         this.events = events;
         this.clock = clock;
         this.properties = properties;
+        this.followUps = followUps;
     }
 
     /** Creates an instance in RECEIVED and schedules it; empty if the business key already exists. */
@@ -121,10 +126,20 @@ public class WorkflowEngine implements InstanceRunner {
                 if (instance.getState() != expected) {
                     return; // a signal got here first
                 }
-                // AWAIT_APPROVAL has its own SLA handling (approvals); other waits give up.
-                if (expected == QuoteState.AWAIT_REPLY || expected == QuoteState.FOLLOW_UP) {
-                    instance.transition(
-                            QuoteState.CLOSED, instance.getContext().withCloseReason("NO_RESPONSE"), clock.instant());
+                // AWAIT_APPROVAL has its own SLA handling (approvals). An unanswered quote gets one reminder
+                // and a second wait; any other wait, or the second one, gives up.
+                QuoteContext ctx = instance.getContext();
+                FollowUpHandler handler = followUps.getIfAvailable();
+                Instant now = clock.instant();
+                if (expected == QuoteState.FOLLOW_UP
+                        && handler != null
+                        && !ctx.hasFlag(FollowUpHandler.FOLLOW_UP_SENT)) {
+                    Duration wait = handler.remind(instanceId, ctx);
+                    instance.transition(QuoteState.FOLLOW_UP, ctx.withFlag(FollowUpHandler.FOLLOW_UP_SENT), now);
+                    instances.saveAndFlush(instance);
+                    scheduler.scheduleTimeout(instanceId, QuoteState.FOLLOW_UP, 2, now.plus(wait));
+                } else if (expected == QuoteState.AWAIT_REPLY || expected == QuoteState.FOLLOW_UP) {
+                    instance.transition(QuoteState.CLOSED, ctx.withCloseReason("NO_RESPONSE"), now);
                     instances.saveAndFlush(instance);
                 }
             });

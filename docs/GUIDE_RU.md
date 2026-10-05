@@ -158,6 +158,7 @@ LLM делает только то, в чём он силён: понимает 
 | `llm` | шаги Understand, Respond, Investigator; промпты; structured output; numeric guard | M2, M4, M6 |
 | `tools` | `ToolGateway`: единственная точка вызова внешних систем (MCP CRM, REST rates, SMTP) | M3, M4 |
 | `enrich` | шаг Enrich: клиент из CRM, флаги `NEW_CUSTOMER`/`CREDIT_HOLD`, только через `ToolGateway` | M3 |
+| `crm` | шаг Record: сделка в CRM через `ToolGateway` (токен, ключ `instanceId:opportunity`); напоминание follow-up | M6 |
 | `quote` | детерминированный расчёт цены (`BigDecimal`) | M3 |
 | `policy` | загрузка и вычисление YAML-политики | M4 |
 | `approval` | approval requests, решения людей, approval tokens (HMAC) | M4, M5 |

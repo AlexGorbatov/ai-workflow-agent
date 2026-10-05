@@ -3,7 +3,10 @@ package com.altronixsoft.workflow.outbox;
 import com.altronixsoft.workflow.intake.EmailThreads;
 import com.altronixsoft.workflow.tools.MailGateway;
 import com.altronixsoft.workflow.tools.OutboundMail;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import java.time.Clock;
+import java.time.Duration;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,7 +16,9 @@ import org.springframework.transaction.support.TransactionTemplate;
 /**
  * Sends what is in the outbox. Each batch is one transaction: the mail goes out, the row is marked sent and
  * the mail is linked to its instance together. If the process dies after the SMTP hand-over but before the
- * commit, the next run sends the same mail again with the same Message-ID (at-least-once).
+ * commit, the next run sends the same mail again with the same Message-ID (at-least-once). A failed send is
+ * tried again later, waiting twice as long each time; after {@code maxAttempts} the row is FAILED and counted in
+ * the {@code outbox.failed} metric.
  */
 @Service
 public class OutboxRelay {
@@ -26,16 +31,29 @@ public class OutboxRelay {
     private final EmailThreads threads;
     private final TransactionTemplate tx;
     private final Clock clock;
+    private final OutboxProperties properties;
+    private final Counter failed;
 
-    OutboxRelay(OutboxRepository outbox, MailGateway mail, EmailThreads threads, TransactionTemplate tx, Clock clock) {
+    OutboxRelay(
+            OutboxRepository outbox,
+            MailGateway mail,
+            EmailThreads threads,
+            TransactionTemplate tx,
+            Clock clock,
+            OutboxProperties properties,
+            MeterRegistry meters) {
         this.outbox = outbox;
         this.mail = mail;
         this.threads = threads;
         this.tx = tx;
         this.clock = clock;
+        this.properties = properties;
+        this.failed = Counter.builder("outbox.failed")
+                .description("Outbox rows given up after the last attempt")
+                .register(meters);
     }
 
-    /** Sends one batch of due rows; returns how many went out. A failed row is marked FAILED and does not stop the batch. */
+    /** Sends one batch of due rows; returns how many went out. A failed row waits for its next attempt; the batch goes on. */
     public int dispatchOnce() {
         Integer sent = tx.execute(status -> {
             List<OutboxEntry> due = outbox.lockDue(clock.instant(), BATCH);
@@ -55,8 +73,21 @@ public class OutboxRelay {
         try {
             mail.send(new OutboundMail(p.to(), p.subject(), p.body(), p.messageId(), p.inReplyTo()));
         } catch (RuntimeException e) {
-            log.warn("Outbox row {} failed: {}", entry.getId(), e.getMessage());
-            entry.markFailed(e.getMessage());
+            int attempt = entry.getAttempts() + 1;
+            if (attempt >= properties.maxAttempts()) {
+                log.warn("Outbox row {} failed for good after {} attempts: {}", entry.getId(), attempt, e.getMessage());
+                entry.failedAttempt(e.getMessage(), null);
+                failed.increment();
+            } else {
+                Duration wait = properties.retryBackoffBase().multipliedBy(1L << (attempt - 1));
+                log.warn(
+                        "Outbox row {} failed (attempt {}), next in {}: {}",
+                        entry.getId(),
+                        attempt,
+                        wait,
+                        e.getMessage());
+                entry.failedAttempt(e.getMessage(), clock.instant().plus(wait));
+            }
             return false;
         }
         threads.saveOut(p.messageId(), entry.getInstanceId());

@@ -1,0 +1,15 @@
+Subject: Your freight quote: {origin} - {destination}
+Hello {customer},
+
+thank you for your request. Here is our quote:
+
+Route: {origin} - {destination}
+Cargo: {pallets} pallets, {weightKg} kg, {cargoType}
+Pickup: {pickupDate}
+Transit time: {transitDays} days
+Price: {price} {currency}, all included
+
+The quote is valid until {validUntil}. To book, simply reply to this email.
+
+Best regards,
+Nordline Logistics

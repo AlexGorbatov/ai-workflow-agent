@@ -1,0 +1,15 @@
+Subject: Wycena transportu: {origin} - {destination}
+Dzień dobry {customer},
+
+dziękujemy za zapytanie. Oto nasza oferta:
+
+Trasa: {origin} - {destination}
+Ładunek: {pallets} palet, {weightKg} kg, {cargoType}
+Odbiór: {pickupDate}
+Czas przewozu: {transitDays} dni
+Cena: {price} {currency}, wszystko wliczone
+
+Oferta jest ważna do {validUntil}. Aby zarezerwować, wystarczy odpowiedzieć na tę wiadomość.
+
+Pozdrawiamy
+Nordline Logistics
