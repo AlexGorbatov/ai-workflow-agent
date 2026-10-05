@@ -1,5 +1,6 @@
 package com.altronixsoft.workflow.api;
 
+import static com.altronixsoft.workflow.TestJwt.EVE;
 import static com.altronixsoft.workflow.TestJwt.IVAN;
 import static com.altronixsoft.workflow.TestJwt.OLENA;
 import static com.altronixsoft.workflow.TestJwt.bearer;
@@ -183,5 +184,29 @@ class InstanceApiIT {
                 .andExpect(jsonPath("$.body").doesNotExist());
         mvc.perform(get("/api/v1/instances/{id}", UUID.randomUUID()).header(HttpHeaders.AUTHORIZATION, bearer(OLENA)))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void theSummaryCountsEveryStateAndTheOpenApprovals() throws Exception {
+        closedInstance();
+        long closed = jdbc.sql("select count(*) from workflow_instance where state = 'CLOSED'")
+                .query(Long.class)
+                .single();
+        long total = jdbc.sql("select count(*) from workflow_instance")
+                .query(Long.class)
+                .single();
+        long open = jdbc.sql("select count(*) from approval_task where status in ('OPEN', 'ESCALATED')")
+                .query(Long.class)
+                .single();
+
+        mvc.perform(get("/api/v1/instances/summary").header(HttpHeaders.AUTHORIZATION, bearer(OLENA)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.total").value(total))
+                .andExpect(jsonPath("$.byState.CLOSED").value(closed))
+                .andExpect(jsonPath("$.byState.EXCEPTION").isNumber())
+                .andExpect(jsonPath("$.byState.length()").value(QuoteState.values().length))
+                .andExpect(jsonPath("$.openApprovals").value(open));
+        mvc.perform(get("/api/v1/instances/summary").header(HttpHeaders.AUTHORIZATION, bearer(EVE)))
+                .andExpect(status().isForbidden());
     }
 }

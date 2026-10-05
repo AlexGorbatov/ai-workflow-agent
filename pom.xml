@@ -39,6 +39,7 @@
 
     <modules>
         <module>approval-token</module>
+        <module>operator-ui</module>
         <!-- The mocks build before agent-app: its integration tests start their executable jars. -->
         <module>mock-crm-mcp</module>
         <module>mock-rates</module>
@@ -72,6 +73,11 @@
             <dependency>
                 <groupId>com.altronixsoft</groupId>
                 <artifactId>approval-token</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.altronixsoft</groupId>
+                <artifactId>operator-ui</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

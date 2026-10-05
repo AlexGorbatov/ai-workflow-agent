@@ -19,7 +19,7 @@ computes every number.
 > **Want this for your business?** I build and adapt agents like this one to a company's own mailbox, CRM, prices
 > and approval rules. Get in touch through [my GitHub profile](https://github.com/AlexGorbatov).
 
-![Timeline of an automatic quote: from the email to the CRM opportunity and the customer's acceptance](docs/screenshots/demo-timeline.png)
+![Operator console: requests, the pipeline and the quotes waiting for a person](docs/screenshots/demo-dashboard.png)
 
 ## What it does
 
@@ -55,7 +55,7 @@ mock CRM, the mock carrier rates and the agent with the `demo` profile, sends th
 
 | What | Where |
 |---|---|
-| Operator UI: instances, timelines, approvals | http://localhost:8080/ui/ — `max` / `max` (operator + approver), `olena` / `olena` (operator) |
+| Operator console: dashboard, requests, approvals, what the agent did | http://localhost:8080/ui/ — `max` / `max` (operator + approver), `olena` / `olena` (operator) |
 | The customer's side: requests, clarifications, quotes, reminders | Mailpit, http://localhost:8025 |
 | Dashboard and traces | Grafana, http://localhost:3000 — dashboard *AI Workflow Agent*, traces in Explore → Tempo |
 
@@ -168,7 +168,7 @@ The labels are still drafts awaiting review.
 | Security | Spring Security OAuth2 resource server, Keycloak (roles `operator`, `approver`), HMAC approval tokens |
 | Data | Spring Data JPA, Flyway, jsonb |
 | Models | OpenAI · Azure OpenAI · LM Studio (local) · stub and demo models, selected by profile |
-| Operator UI | Plain ES modules served by agent-app, OIDC with PKCE, no build step |
+| Operator console | Next.js 16, React 19, Tailwind CSS 4; static export served by agent-app (Maven builds it, no Node install needed); OIDC with PKCE |
 | Testing | JUnit 5, Testcontainers, ArchUnit (invariants as tests), LLM evals with thresholds |
 | Observability | Micrometer + OpenTelemetry → Grafana LGTM (Tempo, Prometheus); provisioned dashboard |
 | Tooling | Maven, Spotless (palantir-java-format), GitHub Actions, Docker Compose |
@@ -186,7 +186,8 @@ scripts/send-samples.sh
 ```
 
 `./mvnw -pl agent-app spring-boot:test-run` starts the agent alone with Testcontainers and the stub model, for
-poking at the API. All settings: [`.env.example`](.env.example).
+poking at the API. To work on the console with hot reload, run `npm install && npm run dev` in `operator-ui/`
+(http://localhost:5173/ui/, the API is proxied to agent-app on 8080). All settings: [`.env.example`](.env.example).
 
 ## License
 
