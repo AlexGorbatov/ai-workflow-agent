@@ -1,0 +1,8 @@
+Subject: Нагадування: пропозиція на перевезення {origin} - {destination}
+Добрий день, {customer}!
+
+Нагадуємо про нашу пропозицію за маршрутом {origin} - {destination}: {price} {currency}, дійсна до {validUntil}.
+Щоб забронювати, просто дайте відповідь на цей лист.
+
+З повагою,
+Nordline Logistics

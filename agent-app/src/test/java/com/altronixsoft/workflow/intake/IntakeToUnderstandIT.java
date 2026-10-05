@@ -7,8 +7,6 @@ import com.altronixsoft.workflow.IntegrationTest;
 import com.altronixsoft.workflow.MailpitTestClient;
 import com.altronixsoft.workflow.MockApps;
 import com.altronixsoft.workflow.StubChatModel;
-import com.altronixsoft.workflow.engine.Step;
-import com.altronixsoft.workflow.engine.StepResult;
 import com.altronixsoft.workflow.engine.WorkflowEngine;
 import com.altronixsoft.workflow.engine.WorkflowInstance;
 import com.altronixsoft.workflow.engine.WorkflowInstanceRepository;
@@ -16,6 +14,7 @@ import com.altronixsoft.workflow.llm.Extraction;
 import com.altronixsoft.workflow.llm.Intent;
 import com.altronixsoft.workflow.llm.LlmCall;
 import com.altronixsoft.workflow.llm.LlmCallRepository;
+import com.altronixsoft.workflow.llm.RespondStep;
 import com.altronixsoft.workflow.outbox.OutboxRelay;
 import com.altronixsoft.workflow.quote.QuoteContext;
 import com.altronixsoft.workflow.quote.QuoteState;
@@ -27,41 +26,19 @@ import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.test.context.TestPropertySource;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
- * M2–M4 end to end: mail in, the real Understand step, a clarification mail out, the reply, then the real Enrich,
- * Price and Policy steps against the mock CRM and rates.
+ * M2–M6 end to end: mail in, the real Understand step, a clarification mail out, the reply, then the real Enrich,
+ * Price, Policy, Respond and Record steps against the mock CRM and rates, until the quote waits for an answer.
  */
 @IntegrationTest
 @TestPropertySource(properties = "workflow.real-steps=true")
-@Import({IntakeToUnderstandIT.NextStepStandIn.class, MockApps.class})
+@Import(MockApps.class)
 class IntakeToUnderstandIT {
-
-    /** Respond arrives in M6; until then something has to take the instance from APPROVED. */
-    @TestConfiguration(proxyBeanMethods = false)
-    static class NextStepStandIn {
-
-        @Bean
-        Step approvedStandIn() {
-            return new Step() {
-                @Override
-                public QuoteState handles() {
-                    return QuoteState.APPROVED;
-                }
-
-                @Override
-                public StepResult execute(UUID instanceId, QuoteContext ctx) {
-                    return new StepResult.Next(QuoteState.CLOSED, ctx.withCloseReason("STAND_IN"));
-                }
-            };
-        }
-    }
 
     @Autowired
     EmailPoller poller;
@@ -139,9 +116,8 @@ class IntakeToUnderstandIT {
         mailpit.sendSample("05-clarification-reply.eml", suffix);
         poller.pollOnce();
 
-        await().atMost(10, TimeUnit.SECONDS).until(() -> instance(requestId).getState() == QuoteState.CLOSED);
+        await().atMost(10, TimeUnit.SECONDS).until(() -> instance(requestId).getState() == QuoteState.FOLLOW_UP);
         QuoteContext ctx = instance(requestId).getContext();
-        assertThat(ctx.closeReason()).isEqualTo("STAND_IN");
         assertThat(ctx.replies()).hasSize(1);
         assertThat(ctx.request().pallets()).isEqualTo(8);
         assertThat(ctx.request().weightKg()).isEqualByComparingTo("4800");
@@ -151,11 +127,15 @@ class IntakeToUnderstandIT {
         assertThat(ctx.quote().price()).isEqualByComparingTo("354");
         assertThat(ctx.policy().auto()).isTrue();
         assertThat(ctx.approvalToken()).isNotBlank();
+        // the stub model writes no usable reply, so the template went out
+        assertThat(ctx.flags()).contains(RespondStep.FALLBACK_TEMPLATE);
+        assertThat(ctx.outboundMessageId()).isEqualTo("<" + instanceId + ".quote@nordline.test>");
 
         // both model calls are on record, tied to the instance, with the prompt version
         List<LlmCall> audited = llmCalls.findByInstanceIdOrderByCreatedAtAsc(instanceId);
-        assertThat(audited).hasSize(2);
-        assertThat(audited).extracting(LlmCall::getPromptVersion).containsOnly("understand-v1");
+        assertThat(audited)
+                .extracting(LlmCall::getPromptVersion)
+                .containsExactly("understand-v1", "understand-v1", "respond-v1", "respond-strict-v1");
         assertThat(audited).allSatisfy(c -> assertThat(c.getStepExecutionId()).isNotNull());
     }
 }

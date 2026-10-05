@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 
 import com.altronixsoft.workflow.IntegrationTest;
+import com.altronixsoft.workflow.outbox.OutboxRepository;
 import com.altronixsoft.workflow.quote.QuoteContext;
 import com.altronixsoft.workflow.quote.QuoteState;
 import java.math.BigDecimal;
@@ -34,6 +35,9 @@ class EngineScenariosIT {
 
     @Autowired
     WorkflowScheduler scheduler;
+
+    @Autowired
+    OutboxRepository outbox;
 
     @Autowired
     TransactionTemplate tx;
@@ -246,6 +250,52 @@ class EngineScenariosIT {
         assertThat(stateOf(id)).isEqualTo(QuoteState.CLOSED);
         assertThat(instances.findById(id).orElseThrow().getContext().closeReason())
                 .isEqualTo("CUSTOMER_REPLIED");
+    }
+
+    @Test
+    void aQuoteNobodyAnswersGetsOneReminderAndThenCloses() {
+        ScriptedSteps.on(
+                QuoteState.RESPONDED, ctx -> new StepResult.Wait(QuoteState.FOLLOW_UP, Duration.ofHours(72), ctx));
+        UUID id = start();
+        awaitState(id, QuoteState.FOLLOW_UP);
+        assertThat(scheduler.isTimeoutScheduled(id, QuoteState.FOLLOW_UP)).isTrue();
+
+        engine.onTimeout(id, QuoteState.FOLLOW_UP);
+
+        WorkflowInstance reminded = instances.findById(id).orElseThrow();
+        assertThat(reminded.getState()).isEqualTo(QuoteState.FOLLOW_UP);
+        assertThat(reminded.getContext().flags()).contains(FollowUpHandler.FOLLOW_UP_SENT);
+        assertThat(outbox.findByInstanceIdOrderByCreatedAtAsc(id))
+                .singleElement()
+                .satisfies(mail -> {
+                    assertThat(mail.getDedupeKey()).isEqualTo(id + ":FOLLOW-UP-1");
+                    assertThat(mail.getPayload().to()).isEqualTo("anna@acme.test");
+                    assertThat(mail.getPayload().subject()).startsWith("Reminder:");
+                });
+        assertThat(scheduler.isTimeoutScheduled(id, QuoteState.FOLLOW_UP, 2)).isTrue();
+
+        engine.onTimeout(id, QuoteState.FOLLOW_UP);
+
+        WorkflowInstance closed = instances.findById(id).orElseThrow();
+        assertThat(closed.getState()).isEqualTo(QuoteState.CLOSED);
+        assertThat(closed.getContext().closeReason()).isEqualTo("NO_RESPONSE");
+        assertThat(outbox.findByInstanceIdOrderByCreatedAtAsc(id)).hasSize(1);
+    }
+
+    @Test
+    void aReplyAfterTheReminderClosesTheInstanceAndCancelsTheSecondTimer() {
+        ScriptedSteps.on(
+                QuoteState.RESPONDED, ctx -> new StepResult.Wait(QuoteState.FOLLOW_UP, Duration.ofHours(72), ctx));
+        UUID id = start();
+        awaitState(id, QuoteState.FOLLOW_UP);
+        engine.onTimeout(id, QuoteState.FOLLOW_UP);
+
+        engine.signal(id, new Signal.CustomerReplied("we accept"));
+
+        assertThat(stateOf(id)).isEqualTo(QuoteState.CLOSED);
+        assertThat(instances.findById(id).orElseThrow().getContext().closeReason())
+                .isEqualTo("CUSTOMER_REPLIED");
+        assertThat(scheduler.isTimeoutScheduled(id, QuoteState.FOLLOW_UP, 2)).isFalse();
     }
 
     @Test

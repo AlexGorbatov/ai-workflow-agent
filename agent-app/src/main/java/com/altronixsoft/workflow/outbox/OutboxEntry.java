@@ -59,10 +59,15 @@ public class OutboxEntry {
         this.lastError = null;
     }
 
-    void markFailed(String error) {
-        this.status = OutboxStatus.FAILED;
+    /** One more failed attempt: tried again at {@code retryAt}, or FAILED for good when it is null. */
+    void failedAttempt(String error, Instant retryAt) {
         this.attempts++;
         this.lastError = error;
+        if (retryAt == null) {
+            this.status = OutboxStatus.FAILED;
+        } else {
+            this.nextAttemptAt = retryAt;
+        }
     }
 
     public UUID getId() {

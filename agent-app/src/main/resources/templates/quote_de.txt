@@ -1,0 +1,15 @@
+Subject: Ihr Frachtangebot: {origin} - {destination}
+Guten Tag {customer},
+
+vielen Dank für Ihre Anfrage. Hier ist unser Angebot:
+
+Strecke: {origin} - {destination}
+Ladung: {pallets} Paletten, {weightKg} kg, {cargoType}
+Abholung: {pickupDate}
+Laufzeit: {transitDays} Tage
+Preis: {price} {currency}, alles inklusive
+
+Das Angebot gilt bis {validUntil}. Zur Buchung antworten Sie einfach auf diese E-Mail.
+
+Mit freundlichen Grüßen
+Nordline Logistics

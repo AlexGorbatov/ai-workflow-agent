@@ -1,0 +1,8 @@
+Subject: Przypomnienie: wycena transportu {origin} - {destination}
+Dzień dobry {customer},
+
+przypominamy o naszej ofercie na trasę {origin} - {destination}: {price} {currency}, ważnej do {validUntil}.
+Aby zarezerwować, wystarczy odpowiedzieć na tę wiadomość.
+
+Pozdrawiamy
+Nordline Logistics

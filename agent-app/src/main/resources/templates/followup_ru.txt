@@ -1,0 +1,8 @@
+Subject: Напоминание: предложение на перевозку {origin} - {destination}
+Здравствуйте, {customer}!
+
+Напоминаем о нашем предложении по маршруту {origin} - {destination}: {price} {currency}, действительно до {validUntil}.
+Чтобы забронировать, просто ответьте на это письмо.
+
+С уважением,
+Nordline Logistics

@@ -74,12 +74,19 @@ spring:
           issuer-uri: ${OAUTH2_ISSUER_URI:http://localhost:8180/realms/workflow}
           audiences: ${OAUTH2_AUDIENCE:workflow-api}
 
-# Fail startup while a working state has no step. Turn on once every step exists (M6).
 workflow:
   # The real steps. Off only where tests supply fake ones.
   real-steps: true
+  # Every working state has its step since M6: startup fails if one goes missing.
   registry:
-    require-all-states: false
+    require-all-states: true
+  # How long to wait for the customer after the quote, and again after the one reminder.
+  follow-up:
+    after: ${FOLLOW_UP_AFTER:72h}
+  # A mail that cannot be sent is tried again after 30s, 1m, 2m, 4m; after the 5th failure it is FAILED.
+  outbox:
+    max-attempts: 5
+    retry-backoff-base: 30s
   # Who gets the mail when an approval task is still open at its SLA (policy.approval-sla).
   approvals:
     escalation-to: ${APPROVALS_ESCALATION_TO:approvals-lead@nordline.test}

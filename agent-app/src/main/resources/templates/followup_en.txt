@@ -1,0 +1,8 @@
+Subject: Reminder: your freight quote {origin} - {destination}
+Hello {customer},
+
+a short reminder of our quote for {origin} - {destination}: {price} {currency}, valid until {validUntil}.
+If you would like to book, simply reply to this email.
+
+Best regards,
+Nordline Logistics
