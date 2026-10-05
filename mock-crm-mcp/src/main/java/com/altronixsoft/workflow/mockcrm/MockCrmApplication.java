@@ -4,8 +4,8 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 /**
- * In-memory CRM test double exposed as an MCP server. Tools (find_customer, get_shipment_history,
- * create_quote, update_quote_status) and fixtures arrive in M3 and M4 — see docs/GUIDE_RU.md §7.2.
+ * In-memory CRM test double exposed as an MCP server (Streamable HTTP, {@code /mcp}): find customers, read credit
+ * status, and create an opportunity (the one write, which needs an approval token and an idempotency key).
  */
 @SpringBootApplication
 public class MockCrmApplication {

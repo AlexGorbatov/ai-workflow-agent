@@ -23,3 +23,63 @@ management:
   endpoint:
     health:
       show-details: never
+
+# Written by whoever starts the module; the CRM verifies approval tokens signed with it. No default on purpose.
+approval:
+  token:
+    secret: ${APPROVAL_TOKEN_SECRET}
+
+# Customers for the sample emails. Not in the CRM on purpose: nowafirma.test and kyivtrade.test (new customers).
+# Two customers share polmarket.test: an unknown sender there is ambiguous.
+crm:
+  customers:
+    - id: C-1001
+      name: PolMarket Sp. z o.o.
+      domain: polmarket.test
+      contacts: [anna.kowalska@polmarket.test]
+      tier: GOLD
+      credit-status: OK
+      open-balance: 4200.00
+    - id: C-1007
+      name: PolMarket Cargo Sp. z o.o.
+      domain: polmarket.test
+      contacts: [piotr.nowicki@polmarket.test]
+      tier: STANDARD
+      credit-status: OK
+      open-balance: 0
+    - id: C-1002
+      name: Baltic Timber AB
+      domain: baltictimber.test
+      contacts: [erik.lindqvist@baltictimber.test]
+      tier: STANDARD
+      credit-status: OK
+      open-balance: 8900.00
+    - id: C-1003
+      name: Rhein Chemie GmbH
+      domain: rheinchemie.test
+      contacts: [jonas.weber@rheinchemie.test]
+      tier: GOLD
+      credit-status: WATCH
+      open-balance: 12500.00
+      overdue-amount: 3200.00
+    - id: C-1004
+      name: FrischKette GmbH
+      domain: frischkette.test
+      contacts: [katrin.hoffmann@frischkette.test]
+      tier: STANDARD
+      credit-status: OK
+      open-balance: 1500.00
+    - id: C-1005
+      name: Adriatic Foods S.r.l.
+      domain: adriaticfoods.test
+      contacts: [marco.rossi@adriaticfoods.test]
+      tier: STANDARD
+      credit-status: OK
+      open-balance: 0
+    - id: C-1006
+      name: Iberia Retail S.L.
+      domain: iberiaretail.test
+      contacts: [lucia.garcia@iberiaretail.test]
+      tier: STANDARD
+      credit-status: OK
+      open-balance: 2300.00
