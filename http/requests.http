@@ -28,9 +28,61 @@ GET {{agent}}/actuator/health
 ### agent-app without a token -> 401
 GET {{agent}}/api/v1/instances
 
-### agent-app with a token -> 404 until M1 adds the instances API
-GET {{agent}}/api/v1/instances
+### Instances, newest first; filter by state, page from 0 (operator or approver)
+GET {{agent}}/api/v1/instances?state=AWAIT_APPROVAL&page=0&size=20
 Authorization: Bearer {{olena_token}}
+
+### One instance (no email body)
+# @name instance
+GET {{agent}}/api/v1/instances/{{instance_id}}
+Authorization: Bearer {{olena_token}}
+
+### Its timeline: steps, model and tool calls, mails, approvals, cost
+GET {{agent}}/api/v1/instances/{{instance_id}}/timeline
+Authorization: Bearer {{olena_token}}
+
+### A model call's full text (operator only); the id comes from a LLM_CALL event of the timeline
+GET {{agent}}/api/v1/instances/{{instance_id}}/llm-calls/{{llm_call_id}}
+Authorization: Bearer {{olena_token}}
+
+### Approvals waiting for a decision (approver; olena gets 403)
+# @name approvals
+GET {{agent}}/api/v1/approvals
+Authorization: Bearer {{max_token}}
+
+> {% if (response.body.length) client.global.set("task_id", response.body[0].id); %}
+
+### Decided ones: status=APPROVED | REJECTED | RETRIED | ESCALATED | OPEN
+GET {{agent}}/api/v1/approvals?status=APPROVED
+Authorization: Bearer {{max_token}}
+
+### One task with the facts, rates, breakdown and the model's summary (made on first view)
+GET {{agent}}/api/v1/approvals/{{task_id}}
+Authorization: Bearer {{max_token}}
+
+### Approve, optionally at another price (never below cost: 422); a second decision is 409
+POST {{agent}}/api/v1/approvals/{{task_id}}/decision
+Authorization: Bearer {{max_token}}
+Content-Type: application/json
+
+{"action": "APPROVE", "editedPrice": 1250.00, "comment": "loyal customer"}
+
+### Reject (comment required: 400 without it)
+POST {{agent}}/api/v1/approvals/{{task_id}}/decision
+Authorization: Bearer {{max_token}}
+Content-Type: application/json
+
+{"action": "REJECT", "comment": "no capacity that week"}
+
+### Retry from UNDERSTOOD (read the email again) or ENRICHED (price again)
+POST {{agent}}/api/v1/approvals/{{task_id}}/decision
+Authorization: Bearer {{max_token}}
+Content-Type: application/json
+
+{"action": "RETRY", "retryFrom": "ENRICHED", "comment": "rates were updated"}
+
+### Operator UI (public page; it logs in through Keycloak)
+GET {{agent}}/ui/
 
 ### mock-crm-mcp health
 GET http://localhost:8091/actuator/health
