@@ -1,6 +1,7 @@
 # ai-workflow-agent
 
 ![Status](https://img.shields.io/badge/status-v1.0-2ea44f)
+![License](https://img.shields.io/badge/license-PolyForm_Noncommercial-blue)
 ![Java](https://img.shields.io/badge/Java-25-ED8B00?logo=openjdk&logoColor=white)
 ![Spring Boot](https://img.shields.io/badge/Spring_Boot-4.1-6DB33F?logo=springboot&logoColor=white)
 ![Spring AI](https://img.shields.io/badge/Spring_AI-2.0-6DB33F?logo=spring&logoColor=white)
@@ -14,6 +15,9 @@ It reads the request in any of five languages, looks the customer up in the CRM,
 rates, applies the company's rules, and replies — or puts the quote in front of an approver with a short
 briefing. Every step is durable, audited and replayable; the language model reads and writes text, and code
 computes every number.
+
+> **Want this for your business?** I build and adapt agents like this one to a company's own mailbox, CRM, prices
+> and approval rules. Get in touch through [my GitHub profile](https://github.com/AlexGorbatov).
 
 ![Timeline of an automatic quote: from the email to the CRM opportunity and the customer's acceptance](docs/screenshots/demo-timeline.png)
 
@@ -183,3 +187,9 @@ scripts/send-samples.sh
 
 `./mvnw -pl agent-app spring-boot:test-run` starts the agent alone with Testcontainers and the stub model, for
 poking at the API. All settings: [`.env.example`](.env.example).
+
+## License
+
+[PolyForm Noncommercial 1.0.0](LICENSE.md): you may read, run and modify the code for any noncommercial purpose
+(learning, evaluation, research, personal projects). Commercial use — in a business, for clients, or as part of a
+product or service — needs a separate license from the author; [get in touch](https://github.com/AlexGorbatov).
