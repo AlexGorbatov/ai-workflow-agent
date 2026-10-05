@@ -3,12 +3,15 @@ package com.altronixsoft.workflow;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.messages.ToolResponseMessage;
 import org.springframework.ai.chat.metadata.ChatResponseMetadata;
 import org.springframework.ai.chat.metadata.DefaultUsage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
+import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.ai.model.tool.ToolCallingChatOptions;
 
 /**
  * Chat model for tests and {@code spring-boot:test-run}: never touches the network, answers from rules
@@ -20,7 +23,7 @@ public class StubChatModel implements ChatModel {
     public static final String DEFAULT_REPLY = "{\"stub\":true}";
     public static final String MODEL_NAME = "stub-model";
 
-    private record Rule(String keyword, String reply) {}
+    private record Rule(String keyword, String reply, List<AssistantMessage.ToolCall> toolCalls) {}
 
     /** Returned by {@link #whenPromptContains}; completes the rule. */
     public final class PendingRule {
@@ -32,7 +35,16 @@ public class StubChatModel implements ChatModel {
         }
 
         public StubChatModel replyWith(String text) {
-            rules.add(new Rule(keyword, text));
+            rules.add(new Rule(keyword, text, List.of()));
+            return StubChatModel.this;
+        }
+
+        /**
+         * First asks for these tool calls, the way a model with tools does; once the prompt carries the tool
+         * results (ChatClient runs the tools and calls again), answers {@code text}.
+         */
+        public StubChatModel callToolsThenReplyWith(List<AssistantMessage.ToolCall> calls, String text) {
+            rules.add(new Rule(keyword, text, List.copyOf(calls)));
             return StubChatModel.this;
         }
     }
@@ -50,16 +62,33 @@ public class StubChatModel implements ChatModel {
             throw toThrow;
         }
         String promptText = prompt.getContents();
-        String answer = rules.stream()
-                .filter(rule -> promptText.contains(rule.keyword()))
-                .map(Rule::reply)
+        Rule rule = rules.stream()
+                .filter(r -> promptText.contains(r.keyword()))
                 .findFirst()
-                .orElse(reply);
+                .orElse(new Rule("", reply, List.of()));
+        boolean toolsAnswered = prompt.getInstructions().stream().anyMatch(ToolResponseMessage.class::isInstance);
+        AssistantMessage answer = rule.toolCalls().isEmpty() || toolsAnswered
+                ? new AssistantMessage(rule.reply())
+                : AssistantMessage.builder()
+                        .content("")
+                        .toolCalls(rule.toolCalls())
+                        .build();
         ChatResponseMetadata metadata = ChatResponseMetadata.builder()
                 .model(MODEL_NAME)
-                .usage(new DefaultUsage(tokens(promptText), tokens(answer)))
+                .usage(new DefaultUsage(tokens(promptText), tokens(rule.reply())))
                 .build();
-        return new ChatResponse(List.of(new Generation(new AssistantMessage(answer))), metadata);
+        return new ChatResponse(List.of(new Generation(answer)), metadata);
+    }
+
+    /** Tool-calling options, like a real provider's: without them ChatClient would not hand tools to the model. */
+    @Override
+    public ChatOptions getOptions() {
+        return ToolCallingChatOptions.builder().build();
+    }
+
+    @Override
+    public ChatOptions getDefaultOptions() {
+        return getOptions();
     }
 
     /** A rough count (four characters a token); only the audit tests care that it is not zero. */

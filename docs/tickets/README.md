@@ -9,7 +9,7 @@
 | [M1](M1-engine.md) | Движок workflow | T1.1–T1.2 сделаны; **следующий: T1.0, T1.3** |
 | [M2](M2-intake-understand.md) | Intake и Understand | не начато |
 | [M3](M3-tools.md) | MCP, Tool Gateway, approval token | сделано (T3.1–T3.6) |
-| [M4](M4-pricing-policy.md) | Цена, правила, Investigator | не начато |
+| [M4](M4-pricing-policy.md) | Цена, правила, Investigator | сделано (T4.1–T4.4) |
 | [M5](M5-approvals.md) | Approvals, роли, SLA, UI | не начато |
 | [M6](M6-respond-record.md) | Ответ, CRM, follow-up | не начато |
 | [M7](M7-observability-evals.md) | Наблюдаемость и evals | не начато |

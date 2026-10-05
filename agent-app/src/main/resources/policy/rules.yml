@@ -1,0 +1,19 @@
+# When a quote may go out without a person. Read by PolicyEngine through PolicyRules (typed, checked at
+# startup). The rules see only flags and numbers, never the email text.
+policy:
+  # Any of these on the instance sends the quote to a person.
+  blocking-flags:
+    - SUSPICIOUS_INSTRUCTIONS   # the email tries to instruct the agent
+    - LOW_CONFIDENCE            # the extraction is unsure
+    - NEW_CUSTOMER              # the CRM does not know the sender
+    - CREDIT_HOLD               # the customer has overdue money
+    - LARGE_REQUEST             # many pallets or heavy
+    - DANGEROUS_GOODS           # ADR cargo
+  # A price above this needs a person (in the quote's currency).
+  max-amount: 5000
+  # A margin below this (percent of price) needs a person.
+  min-margin-pct: 10
+  # How long a quote may wait for a person before the SLA fires.
+  approval-sla: 24h
+  # How long the token issued for an automatic approval stays valid.
+  token-validity: 7d

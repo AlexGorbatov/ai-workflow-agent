@@ -4,6 +4,7 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static com.tngtech.archunit.library.GeneralCodingRules.NO_CLASSES_SHOULD_USE_FIELD_INJECTION;
 import static com.tngtech.archunit.library.GeneralCodingRules.NO_CLASSES_SHOULD_USE_JAVA_UTIL_LOGGING;
 
+import com.altronixsoft.workflow.quote.QuoteContext;
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
@@ -52,6 +53,25 @@ class ArchitectureTest {
             .dependOnClassesThat()
             .haveFullyQualifiedName("org.springframework.web.client.RestClient")
             .because("invariant 5: every external call goes through ToolGateway")
+            .allowEmptyShould(true);
+
+    @ArchTest
+    static final ArchRule policyNeverReadsTheEmail = noClasses()
+            .that()
+            .resideInAPackage("..workflow.policy..")
+            .should()
+            .dependOnClassesThat()
+            .resideInAnyPackage("..workflow.llm..", "..workflow.intake..")
+            .orShould()
+            .dependOnClassesThat()
+            .haveFullyQualifiedName("com.altronixsoft.workflow.quote.InboundEmail")
+            .orShould()
+            .callMethod(QuoteContext.class, "email")
+            .orShould()
+            .callMethod(QuoteContext.class, "fullText")
+            .orShould()
+            .callMethod(QuoteContext.class, "replies")
+            .because("invariant 3: the policy decides on flags and numbers; what an email says cannot reach it")
             .allowEmptyShould(true);
 
     @ArchTest

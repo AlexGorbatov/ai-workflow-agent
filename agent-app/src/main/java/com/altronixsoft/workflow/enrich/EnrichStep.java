@@ -1,6 +1,5 @@
 package com.altronixsoft.workflow.enrich;
 
-import com.altronixsoft.workflow.engine.NonRetryableStepException;
 import com.altronixsoft.workflow.engine.Step;
 import com.altronixsoft.workflow.engine.StepResult;
 import com.altronixsoft.workflow.quote.Customer;
@@ -8,8 +7,6 @@ import com.altronixsoft.workflow.quote.CustomerTier;
 import com.altronixsoft.workflow.quote.QuoteContext;
 import com.altronixsoft.workflow.quote.QuoteState;
 import com.altronixsoft.workflow.tools.CallContext;
-import com.altronixsoft.workflow.tools.ToolCallFailed;
-import com.altronixsoft.workflow.tools.ToolDenied;
 import com.altronixsoft.workflow.tools.ToolGateway;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.math.BigDecimal;
@@ -54,7 +51,8 @@ public class EnrichStep implements Step {
     public StepResult execute(UUID instanceId, QuoteContext ctx) {
         CallContext cc = CallContext.of(instanceId, handles());
         String sender = ctx.email().from();
-        List<CrmCustomer> found = json.readValue(call("findCustomersByEmail", Map.of("email", sender), cc), CUSTOMERS);
+        List<CrmCustomer> found =
+                json.readValue(gateway.callFromStep("findCustomersByEmail", Map.of("email", sender), cc), CUSTOMERS);
 
         if (found.isEmpty()) {
             return new StepResult.Next(QuoteState.ENRICHED, ctx.withFlag(NEW_CUSTOMER));
@@ -65,26 +63,12 @@ public class EnrichStep implements Step {
 
         CrmCustomer match = found.getFirst();
         QuoteContext enriched = ctx.withCustomer(new Customer(match.id(), match.name(), sender, tier(match.tier())));
-        CreditStatus credit =
-                json.readValue(call("getCreditStatus", Map.of("customerId", match.id()), cc), CreditStatus.class);
+        CreditStatus credit = json.readValue(
+                gateway.callFromStep("getCreditStatus", Map.of("customerId", match.id()), cc), CreditStatus.class);
         if (credit.overdueAmount() != null && credit.overdueAmount().signum() > 0) {
             enriched = enriched.withFlag(CREDIT_HOLD);
         }
         return new StepResult.Next(QuoteState.ENRICHED, enriched);
-    }
-
-    /** A refusal or a final failure will not change on retry; an outage or a timeout may. */
-    private String call(String tool, Map<String, Object> args, CallContext cc) {
-        try {
-            return gateway.call(tool, args, cc);
-        } catch (ToolDenied e) {
-            throw new NonRetryableStepException(e.getMessage(), e);
-        } catch (ToolCallFailed e) {
-            if (e.retryable()) {
-                throw e;
-            }
-            throw new NonRetryableStepException(e.getMessage(), e);
-        }
     }
 
     /** The CRM may know tiers we do not price differently; they are treated as STANDARD. */
