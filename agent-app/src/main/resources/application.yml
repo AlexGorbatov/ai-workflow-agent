@@ -12,6 +12,10 @@ spring:
   threads:
     virtual:
       enabled: true
+  # Errors as RFC 9457 problem details, validation errors included.
+  mvc:
+    problemdetails:
+      enabled: true
 
   # Local Mailpit from compose.yaml: SMTP 1025, REST API 8025 (workflow.mail.mailpit-url).
   mail:
@@ -76,6 +80,9 @@ workflow:
   real-steps: true
   registry:
     require-all-states: false
+  # Who gets the mail when an approval task is still open at its SLA (policy.approval-sla).
+  approvals:
+    escalation-to: ${APPROVALS_ESCALATION_TO:approvals-lead@nordline.test}
   # The only external tools the agent may call, and where. A tool without a policy is refused; the allowed
   # states are fixed here, never by anything an email says. Brackets keep the camelCase tool names as keys.
   tools:

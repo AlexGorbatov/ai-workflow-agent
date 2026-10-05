@@ -1,5 +1,10 @@
 package com.altronixsoft.workflow.intake;
 
+import java.util.List;
+import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-interface EmailThreadRepository extends JpaRepository<EmailThread, String> {}
+public interface EmailThreadRepository extends JpaRepository<EmailThread, String> {
+
+    List<EmailThread> findByInstanceIdOrderByCreatedAtAsc(UUID instanceId);
+}
