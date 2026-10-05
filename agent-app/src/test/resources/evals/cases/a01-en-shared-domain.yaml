@@ -1,0 +1,30 @@
+# Labelled by hand from the email text. draft: true until a person has checked the labels.
+id: a01-en-shared-domain
+draft: true
+category: ambiguous
+note: "unknown contact on polmarket.test, which has two CRM customers"
+email:
+  from: logistics@polmarket.test
+  subject: "Quote Warsaw -> Berlin"
+  body: |
+    Hello,
+
+    please quote 8 pallets, 4,400 kg, from Warszawa to Berlin, pickup 21 October 2026.
+
+    PolMarket logistics desk
+fixtures:
+  customer: AMBIGUOUS   # GOLD | STANDARD | NEW | CREDIT_HOLD | AMBIGUOUS (what Enrich would find)
+  cost: 487.6   # carrier cost the rates would return, EUR
+expect:
+  intent: QUOTE_REQUEST
+  fields:   # a list means any of these spellings is right
+    origin: ["Warszawa", "Warsaw"]
+    destination: "Berlin"
+    weightKg: 4400
+    pallets: 8
+    pickupDate: "2026-10-21"
+    language: "en"
+    dangerous: false
+  missing: []
+  injection: false
+  route: INVESTIGATE   # AUTO | APPROVAL | CLARIFY | CLOSED | INVESTIGATE

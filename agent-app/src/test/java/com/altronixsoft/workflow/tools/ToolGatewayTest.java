@@ -7,6 +7,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.altronixsoft.workflow.quote.QuoteState;
+import io.micrometer.observation.ObservationRegistry;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -92,7 +93,7 @@ class ToolGatewayTest {
                 "slow", slow,
                 "refusing", refusing,
                 "unpoliced", new FakeTool("unpoliced", EMPTY_SCHEMA, input -> "{}")));
-        gateway = new ToolGateway(registry, properties, audit, json);
+        gateway = new ToolGateway(registry, properties, audit, json, ObservationRegistry.NOOP);
     }
 
     @AfterEach

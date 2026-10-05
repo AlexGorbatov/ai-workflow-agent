@@ -2,6 +2,10 @@ package com.altronixsoft.workflow.engine;
 
 import com.altronixsoft.workflow.quote.QuoteContext;
 import com.altronixsoft.workflow.quote.QuoteState;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
+import io.micrometer.observation.Observation;
+import io.micrometer.observation.ObservationRegistry;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -37,6 +41,8 @@ public class WorkflowEngine implements InstanceRunner {
     private final Clock clock;
     private final EngineProperties properties;
     private final ObjectProvider<FollowUpHandler> followUps;
+    private final ObservationRegistry observations;
+    private final MeterRegistry meters;
 
     WorkflowEngine(
             WorkflowInstanceRepository instances,
@@ -47,7 +53,9 @@ public class WorkflowEngine implements InstanceRunner {
             ApplicationEventPublisher events,
             Clock clock,
             EngineProperties properties,
-            ObjectProvider<FollowUpHandler> followUps) {
+            ObjectProvider<FollowUpHandler> followUps,
+            ObservationRegistry observations,
+            MeterRegistry meters) {
         this.instances = instances;
         this.executions = executions;
         this.registry = registry;
@@ -57,6 +65,8 @@ public class WorkflowEngine implements InstanceRunner {
         this.clock = clock;
         this.properties = properties;
         this.followUps = followUps;
+        this.observations = observations;
+        this.meters = meters;
     }
 
     /** Creates an instance in RECEIVED and schedules it; empty if the business key already exists. */
@@ -175,7 +185,36 @@ public class WorkflowEngine implements InstanceRunner {
         return new Attempt(executionId, number, instance.getState(), instance.getContext());
     }
 
+    /**
+     * Runs the step inside an observation {@code workflow.step}: a span (with the instance id) that holds the model
+     * and tool spans of the step, and a timer {@code workflow.step.duration} tagged only with bounded values.
+     */
     private StepResult run(UUID instanceId, Attempt attempt) {
+        Observation observation = Observation.createNotStarted("workflow.step", observations)
+                .contextualName("step " + attempt.state())
+                .lowCardinalityKeyValue("step", attempt.state().name())
+                .highCardinalityKeyValue("instanceId", instanceId.toString())
+                .start();
+        long started = System.nanoTime();
+        StepResult result;
+        try (Observation.Scope scope = observation.openScope()) {
+            result = execute(instanceId, attempt);
+        }
+        String outcome = outcome(result);
+        observation.lowCardinalityKeyValue("outcome", outcome);
+        observation.lowCardinalityKeyValue("state", nextState(result));
+        observation.stop();
+        Timer.builder("workflow.step.duration")
+                .description("How long a step ran, by step and outcome")
+                .tag("step", attempt.state().name())
+                .tag("outcome", outcome)
+                .publishPercentileHistogram()
+                .register(meters)
+                .record(Duration.ofNanos(System.nanoTime() - started));
+        return result;
+    }
+
+    private StepResult execute(UUID instanceId, Attempt attempt) {
         try {
             return StepScope.call(
                     new StepScope.Current(instanceId, attempt.executionId()),
@@ -186,6 +225,22 @@ public class WorkflowEngine implements InstanceRunner {
             log.warn("Step {} failed for instance {}", attempt.state(), instanceId, e);
             return new StepResult.Fail(String.valueOf(e.getMessage()), true);
         }
+    }
+
+    private static String outcome(StepResult result) {
+        return switch (result) {
+            case StepResult.Next ignored -> "next";
+            case StepResult.Wait ignored -> "wait";
+            case StepResult.Fail fail -> fail.retryable() ? "retry" : "fail";
+        };
+    }
+
+    private static String nextState(StepResult result) {
+        return switch (result) {
+            case StepResult.Next next -> next.next().name();
+            case StepResult.Wait wait -> wait.waitState().name();
+            case StepResult.Fail ignored -> "none";
+        };
     }
 
     /** Applies a step result in the caller's transaction; true when the loop should run the next step. */

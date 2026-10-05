@@ -1,0 +1,38 @@
+# Labelled by hand from the email text. draft: true until a person has checked the labels.
+id: n03-pl-new-customer
+draft: true
+category: normal
+note: "sample 03: NEW_CUSTOMER"
+email:
+  from: tomasz.nowak@nowafirma.test
+  subject: "Wycena transportu: 4 palety Lodz -> Praga"
+  body: |
+    Dzień dobry,
+
+    jesteśmy nową firmą i prosimy o wycenę transportu:
+
+    - 4 palety EUR z częściami rowerowymi, łączna waga około 2 000 kg
+    - Odbiór: 6 października 2026, Łódź (90-001), Polska
+    - Dostawa: Praha (110 00), Czechy
+
+    Towar nie jest niebezpieczny.
+
+    Pozdrawiam,
+    Tomasz Nowak
+    NowaFirma
+fixtures:
+  customer: NEW   # GOLD | STANDARD | NEW | CREDIT_HOLD | AMBIGUOUS (what Enrich would find)
+  cost: 212.8   # carrier cost the rates would return, EUR
+expect:
+  intent: QUOTE_REQUEST
+  fields:   # a list means any of these spellings is right
+    origin: ["Łódź", "Lodz"]
+    destination: ["Praha", "Prague", "Praga"]
+    weightKg: 2000
+    pallets: 4
+    pickupDate: "2026-10-06"
+    language: "pl"
+    dangerous: false
+  missing: []
+  injection: false
+  route: APPROVAL   # AUTO | APPROVAL | CLARIFY | CLOSED | INVESTIGATE

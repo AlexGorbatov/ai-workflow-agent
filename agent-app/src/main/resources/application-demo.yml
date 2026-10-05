@@ -4,3 +4,15 @@
 logging:
   level:
     com.altronixsoft.workflow: DEBUG
+
+# Every trace in the demo, exported to the local otel-lgtm (docker compose up -d lgtm).
+management:
+  tracing:
+    sampling:
+      probability: 1.0
+    export:
+      enabled: true
+  otlp:
+    metrics:
+      export:
+        enabled: true

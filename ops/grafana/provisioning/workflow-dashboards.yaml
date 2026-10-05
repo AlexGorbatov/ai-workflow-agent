@@ -1,0 +1,10 @@
+# Grafana provisioning for otel-lgtm (compose.yaml mounts this file and ops/grafana/dashboards).
+apiVersion: 1
+
+providers:
+  - name: ai-workflow-agent
+    folder: AI Workflow Agent
+    type: file
+    disableDeletion: true
+    options:
+      path: /otel-lgtm/dashboards/ai-workflow-agent

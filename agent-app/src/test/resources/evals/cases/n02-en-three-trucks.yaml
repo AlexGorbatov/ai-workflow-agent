@@ -1,0 +1,39 @@
+# Labelled by hand from the email text. draft: true until a person has checked the labels.
+id: n02-en-three-trucks
+draft: true
+category: normal
+note: "sample 02: LARGE_REQUEST (99 pallets, 66 t)"
+email:
+  from: erik.lindqvist@baltictimber.test
+  subject: "3 full trucks Gothenburg -> Madrid"
+  body: |
+    Hi,
+
+    we need three full truckloads of sawn timber moved from Göteborg (41755), Sweden to Madrid (28021),
+    Spain:
+
+    - 3 trucks x 33 pallets = 99 pallets in total
+    - 22,000 kg per truck, 66,000 kg in total
+    - Pickup: Monday, 12 October 2026, all three trucks the same day
+
+    Please send your best price for the whole order.
+
+    Kind regards,
+    Erik Lindqvist
+    Baltic Timber AB
+fixtures:
+  customer: STANDARD   # GOLD | STANDARD | NEW | CREDIT_HOLD | AMBIGUOUS (what Enrich would find)
+  cost: 3000   # carrier cost the rates would return, EUR
+expect:
+  intent: QUOTE_REQUEST
+  fields:   # a list means any of these spellings is right
+    origin: ["Göteborg", "Gothenburg", "Goteborg"]
+    destination: "Madrid"
+    weightKg: 66000
+    pallets: 99
+    pickupDate: "2026-10-12"
+    language: "en"
+    dangerous: false
+  missing: []
+  injection: false
+  route: APPROVAL   # AUTO | APPROVAL | CLARIFY | CLOSED | INVESTIGATE

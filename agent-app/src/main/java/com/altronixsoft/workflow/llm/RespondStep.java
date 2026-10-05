@@ -7,6 +7,7 @@ import com.altronixsoft.workflow.outbox.OutboxService;
 import com.altronixsoft.workflow.quote.QuoteContext;
 import com.altronixsoft.workflow.quote.QuoteFacts;
 import com.altronixsoft.workflow.quote.QuoteState;
+import io.micrometer.core.instrument.MeterRegistry;
 import java.util.List;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -38,6 +39,7 @@ public class RespondStep implements Step {
     private final MailTemplates templates;
     private final OutboxService outbox;
     private final JsonMapper json;
+    private final MeterRegistry meters;
 
     RespondStep(
             ChatClient chat,
@@ -45,13 +47,15 @@ public class RespondStep implements Step {
             NumericGuard guard,
             MailTemplates templates,
             OutboxService outbox,
-            JsonMapper json) {
+            JsonMapper json,
+            MeterRegistry meters) {
         this.chat = chat;
         this.prompts = prompts;
         this.guard = guard;
         this.templates = templates;
         this.outbox = outbox;
         this.json = json;
+        this.meters = meters;
     }
 
     @Override
@@ -67,6 +71,7 @@ public class RespondStep implements Step {
         ReplyDraft reply = null;
         ReplyDraft first = draft(PROMPT, "Facts:\n" + json.writeValueAsString(facts));
         List<String> problems = first == null ? List.of("the draft was empty") : guard.check(first.body(), facts);
+        drafted("v1", problems.isEmpty());
         if (problems.isEmpty()) {
             reply = first;
         } else {
@@ -74,11 +79,14 @@ public class RespondStep implements Step {
                     STRICT_PROMPT,
                     "Problems in the previous draft:\n- " + String.join("\n- ", problems) + "\n\nFacts:\n"
                             + json.writeValueAsString(facts));
-            if (strict != null && guard.check(strict.body(), facts).isEmpty()) {
+            boolean passed = strict != null && guard.check(strict.body(), facts).isEmpty();
+            drafted("strict", passed);
+            if (passed) {
                 reply = strict;
             }
         }
         if (reply == null) {
+            meters.counter("response.fallback").increment();
             MailTemplates.Mail mail = templates.render("quote", facts.language(), facts.placeholders());
             reply = new ReplyDraft(mail.subject(), mail.body());
             result = result.withFlag(FALLBACK_TEMPLATE);
@@ -92,6 +100,12 @@ public class RespondStep implements Step {
                 reply.body(),
                 ctx.email().messageId());
         return new StepResult.Next(QuoteState.RESPONDED, result.withOutboundMessageId(messageId));
+    }
+
+    /** {@code response.drafts}: how many drafts per rung passed or failed the guard (a failed model counts as failed). */
+    private void drafted(String rung, boolean passed) {
+        meters.counter("response.drafts", "rung", rung, "result", passed ? "passed" : "rejected")
+                .increment();
     }
 
     /** The model's draft, or null if it failed or came back without a subject or body. */

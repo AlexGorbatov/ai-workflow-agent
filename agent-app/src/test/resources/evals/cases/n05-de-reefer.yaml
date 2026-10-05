@@ -1,0 +1,38 @@
+# Labelled by hand from the email text. draft: true until a person has checked the labels.
+id: n05-de-reefer
+draft: true
+category: normal
+note: "sample 08: German date 07.10.2026, thousands point"
+email:
+  from: katrin.hoffmann@frischkette.test
+  subject: "Anfrage Kühltransport Hamburg – Wien"
+  body: |
+    Guten Tag,
+
+    wir benötigen ein Angebot für einen Kühltransport (2–8 °C):
+
+    - 14 Paletten Molkereiprodukte, Gesamtgewicht 9.800 kg
+    - Abholung: 07.10.2026 in Hamburg (22113), Deutschland
+    - Zustellung: Wien (1110), Österreich
+
+    Keine Gefahrgüter.
+
+    Mit freundlichen Grüßen
+    Katrin Hoffmann
+    FrischKette GmbH
+fixtures:
+  customer: STANDARD   # GOLD | STANDARD | NEW | CREDIT_HOLD | AMBIGUOUS (what Enrich would find)
+  cost: 1000   # carrier cost the rates would return, EUR
+expect:
+  intent: QUOTE_REQUEST
+  fields:   # a list means any of these spellings is right
+    origin: "Hamburg"
+    destination: ["Wien", "Vienna"]
+    weightKg: 9800
+    pallets: 14
+    pickupDate: "2026-10-07"
+    language: "de"
+    dangerous: false
+  missing: []
+  injection: false
+  route: AUTO   # AUTO | APPROVAL | CLARIFY | CLOSED | INVESTIGATE

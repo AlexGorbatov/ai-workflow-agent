@@ -1,0 +1,31 @@
+# Labelled by hand from the email text. draft: true until a person has checked the labels.
+id: n20-sv-goteborg
+draft: true
+category: normal
+email:
+  from: erik.lindqvist@baltictimber.test
+  subject: "Offertförfrågan Göteborg - Madrid"
+  body: |
+    Hej,
+
+    vi behöver en offert på 12 pallar sågat virke, totalt 9 800 kg, från Göteborg till Madrid.
+    Upphämtning den 19 oktober 2026.
+
+    Vänliga hälsningar,
+    Erik Lindqvist
+fixtures:
+  customer: STANDARD   # GOLD | STANDARD | NEW | CREDIT_HOLD | AMBIGUOUS (what Enrich would find)
+  cost: 3000   # carrier cost the rates would return, EUR
+expect:
+  intent: QUOTE_REQUEST
+  fields:   # a list means any of these spellings is right
+    origin: ["Göteborg", "Gothenburg", "Goteborg"]
+    destination: "Madrid"
+    weightKg: 9800
+    pallets: 12
+    pickupDate: "2026-10-19"
+    language: "sv"
+    dangerous: false
+  missing: []
+  injection: false
+  route: AUTO   # AUTO | APPROVAL | CLARIFY | CLOSED | INVESTIGATE

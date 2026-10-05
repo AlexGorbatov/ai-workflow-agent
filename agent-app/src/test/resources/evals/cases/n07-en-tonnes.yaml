@@ -1,0 +1,32 @@
+# Labelled by hand from the email text. draft: true until a person has checked the labels.
+id: n07-en-tonnes
+draft: true
+category: normal
+note: "weight in tonnes"
+email:
+  from: anna.kowalska@polmarket.test
+  subject: "Warsaw to Berlin again"
+  body: |
+    Hi,
+
+    same lane as last month: 12 pallets, 7.2 t in total, from Warsaw to Berlin.
+    Pickup on 20 October 2026.
+
+    Thanks,
+    Anna
+fixtures:
+  customer: GOLD   # GOLD | STANDARD | NEW | CREDIT_HOLD | AMBIGUOUS (what Enrich would find)
+  cost: 487.6   # carrier cost the rates would return, EUR
+expect:
+  intent: QUOTE_REQUEST
+  fields:   # a list means any of these spellings is right
+    origin: ["Warszawa", "Warsaw"]
+    destination: "Berlin"
+    weightKg: 7200
+    pallets: 12
+    pickupDate: "2026-10-20"
+    language: "en"
+    dangerous: false
+  missing: []
+  injection: false
+  route: AUTO   # AUTO | APPROVAL | CLARIFY | CLOSED | INVESTIGATE

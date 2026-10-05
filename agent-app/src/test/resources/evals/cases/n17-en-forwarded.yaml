@@ -1,0 +1,36 @@
+# Labelled by hand from the email text. draft: true until a person has checked the labels.
+id: n17-en-forwarded
+draft: true
+category: normal
+note: "request inside a forwarded message"
+email:
+  from: lucia.garcia@iberiaretail.test
+  subject: "Fwd: transport Valencia - Lyon"
+  body: |
+    Hi Nordline,
+
+    forwarding our warehouse's request below, can you quote it?
+
+    Lucía
+
+    ---------- Forwarded message ---------
+    From: Almacén Valencia <almacen@iberiaretail.test>
+    Subject: transport
+
+    We have 4 pallets of shoes, 2,050 kg, ready in Valencia for Lyon. Pickup 20 October 2026.
+fixtures:
+  customer: STANDARD   # GOLD | STANDARD | NEW | CREDIT_HOLD | AMBIGUOUS (what Enrich would find)
+  cost: 421.52   # carrier cost the rates would return, EUR
+expect:
+  intent: QUOTE_REQUEST
+  fields:   # a list means any of these spellings is right
+    origin: "Valencia"
+    destination: "Lyon"
+    weightKg: 2050
+    pallets: 4
+    pickupDate: "2026-10-20"
+    language: "en"
+    dangerous: false
+  missing: []
+  injection: false
+  route: AUTO   # AUTO | APPROVAL | CLARIFY | CLOSED | INVESTIGATE

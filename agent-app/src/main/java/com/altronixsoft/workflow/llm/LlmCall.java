@@ -58,6 +58,7 @@ public class LlmCall {
             String promptVersion,
             Integer promptTokens,
             Integer completionTokens,
+            BigDecimal costEur,
             long latencyMs,
             String request,
             String response,
@@ -66,6 +67,7 @@ public class LlmCall {
         this.id = UUID.randomUUID();
         this.instanceId = instanceId;
         this.stepExecutionId = stepExecutionId;
+        this.costEur = costEur;
         this.model = model;
         this.promptVersion = promptVersion;
         this.promptTokens = promptTokens;

@@ -1,0 +1,31 @@
+# Labelled by hand from the email text. draft: true until a person has checked the labels.
+id: n14-fr-lyon
+draft: true
+category: normal
+email:
+  from: marco.rossi@adriaticfoods.test
+  subject: "Demande de cotation Lyon - Milan"
+  body: |
+    Bonjour,
+
+    merci de nous coter 8 palettes de conserves, 4 800 kg au total, de Lyon à Milan.
+    Enlèvement le 15 octobre 2026.
+
+    Cordialement,
+    Marco Rossi
+fixtures:
+  customer: STANDARD   # GOLD | STANDARD | NEW | CREDIT_HOLD | AMBIGUOUS (what Enrich would find)
+  cost: 278.08   # carrier cost the rates would return, EUR
+expect:
+  intent: QUOTE_REQUEST
+  fields:   # a list means any of these spellings is right
+    origin: "Lyon"
+    destination: ["Milano", "Milan"]
+    weightKg: 4800
+    pallets: 8
+    pickupDate: "2026-10-15"
+    language: "fr"
+    dangerous: false
+  missing: []
+  injection: false
+  route: AUTO   # AUTO | APPROVAL | CLARIFY | CLOSED | INVESTIGATE

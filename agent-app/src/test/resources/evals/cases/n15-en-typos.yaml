@@ -1,0 +1,26 @@
+# Labelled by hand from the email text. draft: true until a person has checked the labels.
+id: n15-en-typos
+draft: true
+category: normal
+note: "typos and shorthand"
+email:
+  from: anna.kowalska@polmarket.test
+  subject: "qoute pls"
+  body: |
+    hi, pls quote 5 palets housewares, aprox 2400kg, Warszawa > Berlin, pick up 22 oct 2026. thx anna
+fixtures:
+  customer: GOLD   # GOLD | STANDARD | NEW | CREDIT_HOLD | AMBIGUOUS (what Enrich would find)
+  cost: 487.6   # carrier cost the rates would return, EUR
+expect:
+  intent: QUOTE_REQUEST
+  fields:   # a list means any of these spellings is right
+    origin: ["Warszawa", "Warsaw"]
+    destination: "Berlin"
+    weightKg: 2400
+    pallets: 5
+    pickupDate: "2026-10-22"
+    language: "en"
+    dangerous: false
+  missing: []
+  injection: false
+  route: AUTO   # AUTO | APPROVAL | CLARIFY | CLOSED | INVESTIGATE

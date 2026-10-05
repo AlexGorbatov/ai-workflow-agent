@@ -1,0 +1,23 @@
+# Labelled by hand from the email text. draft: true until a person has checked the labels.
+id: x05-en-newsletter
+draft: true
+category: not-a-request
+email:
+  from: news@trucking-weekly.test
+  subject: "Trucking Weekly: diesel prices up 4% in September"
+  body: |
+    This week in road freight:
+
+    - Diesel prices rose 4% in September across the EU.
+    - New toll rates in Germany from January.
+    - Five tips to cut empty kilometres.
+
+    Unsubscribe: reply STOP.
+fixtures:
+  customer: NONE   # GOLD | STANDARD | NEW | CREDIT_HOLD | AMBIGUOUS (what Enrich would find)
+  cost: 600   # carrier cost the rates would return, EUR
+expect:
+  intent: OTHER
+  missing: []
+  injection: false
+  route: CLOSED   # AUTO | APPROVAL | CLARIFY | CLOSED | INVESTIGATE
