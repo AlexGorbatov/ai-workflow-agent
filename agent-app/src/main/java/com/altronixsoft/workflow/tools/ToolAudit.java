@@ -71,7 +71,8 @@ class ToolAudit {
             String result,
             ToolCallStatus status,
             String error) {
-        UUID execution = StepScope.current().map(StepScope.Current::stepExecutionId).orElse(null);
+        UUID execution =
+                StepScope.current().map(StepScope.Current::stepExecutionId).orElse(null);
         calls.save(new ToolCall(
                 cc.instanceId(),
                 execution,

@@ -55,6 +55,25 @@ class ArchitectureTest {
             .allowEmptyShould(true);
 
     @ArchTest
+    static final ArchRule toolsAreReachedOnlyThroughTheGateway = noClasses()
+            .that()
+            .resideOutsideOfPackage("..workflow.tools..")
+            .should()
+            .dependOnClassesThat()
+            .haveFullyQualifiedName("com.altronixsoft.workflow.tools.ToolRegistry")
+            .orShould()
+            .dependOnClassesThat()
+            .haveFullyQualifiedName("com.altronixsoft.workflow.tools.CrmConnection")
+            .orShould()
+            .dependOnClassesThat()
+            .haveFullyQualifiedName("com.altronixsoft.workflow.tools.RatesTool")
+            .orShould()
+            .dependOnClassesThat()
+            .haveFullyQualifiedName("org.springframework.ai.tool.function.FunctionToolCallback")
+            .because("invariant 5: a tool callback outside ToolGateway would skip its allowlist, token check and audit")
+            .allowEmptyShould(true);
+
+    @ArchTest
     static final ArchRule noVendorModelSdk = noClasses()
             .should()
             .dependOnClassesThat()

@@ -73,6 +73,31 @@ workflow:
   real-steps: true
   registry:
     require-all-states: false
+  # The only external tools the agent may call, and where. A tool without a policy is refused; the allowed
+  # states are fixed here, never by anything an email says. Brackets keep the camelCase tool names as keys.
+  tools:
+    crm-url: ${CRM_URL:http://localhost:8091}
+    crm-endpoint: /mcp
+    rates-url: ${RATES_URL:http://localhost:8092}
+    # slow or error: sent as X-Simulate to mock-rates, to demo timeouts and outages
+    rates-simulate: ${RATES_SIMULATE:}
+    policies:
+      "[findCustomersByEmail]":
+        kind: READ
+        allowed-in: [UNDERSTOOD, INVESTIGATING]
+        timeout: 5s
+      "[getCreditStatus]":
+        kind: READ
+        allowed-in: [UNDERSTOOD, INVESTIGATING]
+        timeout: 5s
+      "[getRates]":
+        kind: READ
+        allowed-in: [ENRICHED, INVESTIGATING]
+        timeout: 5s
+      "[createOpportunity]":
+        kind: WRITE
+        allowed-in: [RESPONDED]
+        timeout: 10s
 
 # health (with liveness/readiness probes, status only) and info. env, configprops and heapdump
 # would expose secrets and email content.
