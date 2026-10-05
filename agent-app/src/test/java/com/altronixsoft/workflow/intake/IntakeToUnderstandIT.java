@@ -35,24 +35,24 @@ import org.springframework.test.context.TestPropertySource;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
- * M2–M3 end to end: mail in, the real Understand step, a clarification mail out, the reply, then the real Enrich
- * step against the mock CRM.
+ * M2–M4 end to end: mail in, the real Understand step, a clarification mail out, the reply, then the real Enrich,
+ * Price and Policy steps against the mock CRM and rates.
  */
 @IntegrationTest
 @TestPropertySource(properties = "workflow.real-steps=true")
 @Import({IntakeToUnderstandIT.NextStepStandIn.class, MockApps.class})
 class IntakeToUnderstandIT {
 
-    /** Price arrives in M4; until then something has to take the instance from ENRICHED. */
+    /** Respond arrives in M6; until then something has to take the instance from APPROVED. */
     @TestConfiguration(proxyBeanMethods = false)
     static class NextStepStandIn {
 
         @Bean
-        Step enrichedStandIn() {
+        Step approvedStandIn() {
             return new Step() {
                 @Override
                 public QuoteState handles() {
-                    return QuoteState.ENRICHED;
+                    return QuoteState.APPROVED;
                 }
 
                 @Override
@@ -147,6 +147,10 @@ class IntakeToUnderstandIT {
         assertThat(ctx.request().weightKg()).isEqualByComparingTo("4800");
         assertThat(ctx.request().pickupDate()).isEqualTo(LocalDate.of(2026, 10, 8));
         assertThat(ctx.customer().id()).isEqualTo("C-1005");
+        // 440 km, 4800 kg: BudgetTrans 278.08; STANDARD: 278.08 × 1.18 × 1.08 = 354.39 → 354, approved by the policy
+        assertThat(ctx.quote().price()).isEqualByComparingTo("354");
+        assertThat(ctx.policy().auto()).isTrue();
+        assertThat(ctx.approvalToken()).isNotBlank();
 
         // both model calls are on record, tied to the instance, with the prompt version
         List<LlmCall> audited = llmCalls.findByInstanceIdOrderByCreatedAtAsc(instanceId);

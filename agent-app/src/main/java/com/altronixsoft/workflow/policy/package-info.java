@@ -1,7 +1,7 @@
 /**
- * Loads and evaluates the typed, versioned YAML quote policy: {@code AUTO_APPROVE} or
- * {@code REQUIRE_APPROVAL} with the required role and the matched rule ids.
+ * The quote policy: typed rules from {@code policy/rules.yml}, {@code PolicyEngine} (flags and numbers in,
+ * auto or not plus reasons out) and the Policy step, which issues the approval token for an automatic approval.
  *
- * <p>Never depends on the {@code llm} package or Spring AI. Arrives in M4 — see docs/milestones/M4.md.
+ * <p>Never depends on the {@code llm} or {@code intake} packages, Spring AI, or the email text (ArchUnit).
  */
 package com.altronixsoft.workflow.policy;

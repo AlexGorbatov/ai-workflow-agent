@@ -6,6 +6,9 @@ server:
 spring:
   application:
     name: agent-app
+  # The quote policy lives in its own file so it can be reviewed and versioned apart from wiring.
+  config:
+    import: classpath:policy/rules.yml
   threads:
     virtual:
       enabled: true
@@ -98,6 +101,23 @@ workflow:
         kind: WRITE
         allowed-in: [RESPONDED]
         timeout: 10s
+
+# How a carrier cost becomes a price: price = round(cost * (1 + margin) * (1 + fuel) + adr). Percents as numbers.
+pricing:
+  margin-by-tier:
+    GOLD: 12
+    STANDARD: 18
+  new-customer-margin: 22
+  fuel-surcharge-pct: 8
+  adr-surcharge: 150
+  round-to: 1
+  validity-days: 14
+  max-transit-days: 5
+
+# HMAC secret for approval tokens; the CRM verifies them with the same one. No default on purpose.
+approval:
+  token:
+    secret: ${APPROVAL_TOKEN_SECRET}
 
 # health (with liveness/readiness probes, status only) and info. env, configprops and heapdump
 # would expose secrets and email content.

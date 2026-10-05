@@ -1,5 +1,6 @@
 package com.altronixsoft.workflow.tools;
 
+import com.altronixsoft.workflow.engine.NonRetryableStepException;
 import io.modelcontextprotocol.json.schema.JsonSchemaValidator;
 import io.modelcontextprotocol.json.schema.jackson3.DefaultJsonSchemaValidator;
 import jakarta.annotation.PreDestroy;
@@ -98,6 +99,23 @@ public class ToolGateway {
             // 4. bounded in time; 5. the audit around all of it
             return withTimeout(callback, json.writeValueAsString(sent), policy.timeout());
         });
+    }
+
+    /**
+     * {@link #call} for a step: a refusal or a failure that a retry cannot fix becomes a {@link
+     * NonRetryableStepException}; an outage or a timeout stays a retryable {@link ToolCallFailed}.
+     */
+    public String callFromStep(String tool, Map<String, Object> args, CallContext cc) {
+        try {
+            return call(tool, args, cc);
+        } catch (ToolDenied e) {
+            throw new NonRetryableStepException(e.getMessage(), e);
+        } catch (ToolCallFailed e) {
+            if (e.retryable()) {
+                throw e;
+            }
+            throw new NonRetryableStepException(e.getMessage(), e);
+        }
     }
 
     /**
