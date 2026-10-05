@@ -5,6 +5,7 @@ import static org.awaitility.Awaitility.await;
 
 import com.altronixsoft.workflow.IntegrationTest;
 import com.altronixsoft.workflow.MailpitTestClient;
+import com.altronixsoft.workflow.MockApps;
 import com.altronixsoft.workflow.StubChatModel;
 import com.altronixsoft.workflow.engine.Step;
 import com.altronixsoft.workflow.engine.StepResult;
@@ -33,22 +34,25 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.test.context.TestPropertySource;
 import tools.jackson.databind.json.JsonMapper;
 
-/** M2 end to end: mail in, the real Understand step, a clarification mail out, the reply, and on to the next step. */
+/**
+ * M2–M3 end to end: mail in, the real Understand step, a clarification mail out, the reply, then the real Enrich
+ * step against the mock CRM.
+ */
 @IntegrationTest
 @TestPropertySource(properties = "workflow.real-steps=true")
-@Import(IntakeToUnderstandIT.NextStepStandIn.class)
+@Import({IntakeToUnderstandIT.NextStepStandIn.class, MockApps.class})
 class IntakeToUnderstandIT {
 
-    /** Enrich arrives in M3; until then something has to take the instance from UNDERSTOOD. */
+    /** Price arrives in M4; until then something has to take the instance from ENRICHED. */
     @TestConfiguration(proxyBeanMethods = false)
     static class NextStepStandIn {
 
         @Bean
-        Step understoodStandIn() {
+        Step enrichedStandIn() {
             return new Step() {
                 @Override
                 public QuoteState handles() {
-                    return QuoteState.UNDERSTOOD;
+                    return QuoteState.ENRICHED;
                 }
 
                 @Override
@@ -142,6 +146,7 @@ class IntakeToUnderstandIT {
         assertThat(ctx.request().pallets()).isEqualTo(8);
         assertThat(ctx.request().weightKg()).isEqualByComparingTo("4800");
         assertThat(ctx.request().pickupDate()).isEqualTo(LocalDate.of(2026, 10, 8));
+        assertThat(ctx.customer().id()).isEqualTo("C-1005");
 
         // both model calls are on record, tied to the instance, with the prompt version
         List<LlmCall> audited = llmCalls.findByInstanceIdOrderByCreatedAtAsc(instanceId);
