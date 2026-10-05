@@ -10,6 +10,11 @@ spring:
     virtual:
       enabled: true
 
+  # Local Mailpit from compose.yaml: SMTP 1025, REST API 8025 (workflow.mail.mailpit-url).
+  mail:
+    host: ${SMTP_HOST:localhost}
+    port: ${SMTP_PORT:1025}
+
   datasource:
     url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:workflow}
     username: ${POSTGRES_USER:workflow}
@@ -61,6 +66,13 @@ spring:
         jwt:
           issuer-uri: ${OAUTH2_ISSUER_URI:http://localhost:8180/realms/workflow}
           audiences: ${OAUTH2_AUDIENCE:workflow-api}
+
+# Fail startup while a working state has no step. Turn on once every step exists (M6).
+workflow:
+  # The real steps. Off only where tests supply fake ones.
+  real-steps: true
+  registry:
+    require-all-states: false
 
 # health (with liveness/readiness probes, status only) and info. env, configprops and heapdump
 # would expose secrets and email content.
