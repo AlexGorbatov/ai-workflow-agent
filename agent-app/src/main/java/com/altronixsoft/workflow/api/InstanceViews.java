@@ -12,6 +12,7 @@ import com.altronixsoft.workflow.quote.QuoteState;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -51,6 +52,8 @@ final class InstanceViews {
     }
 
     record Page(List<Item> items, int page, int size, long total) {}
+
+    record Summary(long total, Map<QuoteState, Long> byState, long openApprovals) {}
 
     record Detail(
             UUID id,

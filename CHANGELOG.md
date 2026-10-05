@@ -8,8 +8,18 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- Operator console rebuilt in Next.js (module `operator-ui`): a dashboard with live counts, the pipeline, the
+  approvals waiting for a person and a searchable request list; a request page with the route, the quote and its
+  breakdown, carrier rates, the AI briefing, the decision (with the margin as you type) and what the agent did,
+  step by step. Built by Maven (Node is downloaded, not required) and served by agent-app at `/ui/`.
+- `GET /api/v1/instances/summary`: instances per state and open approvals, for dashboards.
 - License: PolyForm Noncommercial 1.0.0 (`LICENSE.md`), also declared in the Maven metadata instead of the
   Apache 2.0 inherited from the Spring Boot parent.
+
+### Changed
+
+- Public pages also answer `HEAD` (the console prefetches its pages with it).
+- The plain-JavaScript operator UI is replaced by the console above; its URL stays `/ui/`.
 
 ## [1.0.0] — 2026-10-05
 

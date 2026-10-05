@@ -8,9 +8,12 @@ import com.altronixsoft.workflow.engine.WorkflowInstanceRepository;
 import com.altronixsoft.workflow.llm.LlmCall;
 import com.altronixsoft.workflow.llm.LlmCallRepository;
 import com.altronixsoft.workflow.quote.QuoteState;
+import java.util.EnumMap;
+import java.util.Map;
 import java.util.UUID;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -27,11 +30,35 @@ class InstanceController {
     private final WorkflowInstanceRepository instances;
     private final TimelineService timelines;
     private final LlmCallRepository llmCalls;
+    private final JdbcClient jdbc;
 
-    InstanceController(WorkflowInstanceRepository instances, TimelineService timelines, LlmCallRepository llmCalls) {
+    InstanceController(
+            WorkflowInstanceRepository instances,
+            TimelineService timelines,
+            LlmCallRepository llmCalls,
+            JdbcClient jdbc) {
         this.instances = instances;
         this.timelines = timelines;
         this.llmCalls = llmCalls;
+        this.jdbc = jdbc;
+    }
+
+    /** Counts for a dashboard: instances per state (every state, zero included) and approvals waiting. */
+    @GetMapping("/summary")
+    InstanceViews.Summary summary() {
+        Map<QuoteState, Long> byState = new EnumMap<>(QuoteState.class);
+        for (QuoteState state : QuoteState.values()) {
+            byState.put(state, 0L);
+        }
+        jdbc.sql("select state, count(*) as n from workflow_instance group by state")
+                .query((rs, row) -> Map.entry(QuoteState.valueOf(rs.getString("state")), rs.getLong("n")))
+                .list()
+                .forEach(e -> byState.put(e.getKey(), e.getValue()));
+        long openApprovals = jdbc.sql("select count(*) from approval_task where status in ('OPEN', 'ESCALATED')")
+                .query(Long.class)
+                .single();
+        long total = byState.values().stream().mapToLong(Long::longValue).sum();
+        return new InstanceViews.Summary(total, byState, openApprovals);
     }
 
     /** Newest first; {@code state} filters, {@code page} starts at 0. */

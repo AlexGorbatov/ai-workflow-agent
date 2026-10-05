@@ -71,6 +71,11 @@
             <groupId>com.altronixsoft</groupId>
             <artifactId>approval-token</artifactId>
         </dependency>
+        <!-- The operator console: static files under META-INF/resources/ui. -->
+        <dependency>
+            <groupId>com.altronixsoft</groupId>
+            <artifactId>operator-ui</artifactId>
+        </dependency>
         <!-- MCP client classes only; the connection is made lazily by tools/CrmConnection, not by autoconfiguration. -->
         <dependency>
             <groupId>org.springframework.ai</groupId>

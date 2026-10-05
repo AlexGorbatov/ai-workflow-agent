@@ -36,6 +36,9 @@ class SecurityConfig {
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http.authorizeHttpRequests(auth -> auth.requestMatchers(HttpMethod.GET, PUBLIC_GET_ENDPOINTS)
                         .permitAll()
+                        // the UI prefetches its pages with HEAD
+                        .requestMatchers(HttpMethod.HEAD, PUBLIC_GET_ENDPOINTS)
+                        .permitAll()
                         .requestMatchers("/api/v1/approvals/**", "/api/v1/approvals")
                         .hasRole(APPROVER)
                         // a model call's full text includes the customer's email: operators only

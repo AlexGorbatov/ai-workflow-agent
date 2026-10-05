@@ -6,6 +6,7 @@ import static com.altronixsoft.workflow.TestJwt.MAX;
 import static com.altronixsoft.workflow.TestJwt.OLENA;
 import static com.altronixsoft.workflow.TestJwt.bearer;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.head;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.altronixsoft.workflow.IntegrationTest;
@@ -63,6 +64,12 @@ class SecurityIT {
             request.header(HttpHeaders.AUTHORIZATION, bearer(user));
         }
         mvc.perform(request).andExpect(status().is(expected));
+    }
+
+    @Test
+    void publicPagesAnswerHeadAsWellAsGet() throws Exception {
+        mvc.perform(head("/ui/config.json")).andExpect(status().isOk());
+        mvc.perform(head("/api/v1/instances")).andExpect(status().isUnauthorized());
     }
 
     @Test
