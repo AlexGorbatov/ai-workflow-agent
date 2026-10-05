@@ -15,6 +15,11 @@ db-scheduler:
   polling-interval: 100ms
   heartbeat-interval: 1s
 
+# The same secret MockApps gives the mock CRM, so tokens issued here pass its check.
+approval:
+  token:
+    secret: test-approval-secret-0123456789abcdef
+
 workflow:
   # Engine and intake tests bring fake steps; a test that needs the real ones turns this on itself.
   real-steps: false
