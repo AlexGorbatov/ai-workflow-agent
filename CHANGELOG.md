@@ -6,6 +6,11 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- License: PolyForm Noncommercial 1.0.0 (`LICENSE.md`), also declared in the Maven metadata instead of the
+  Apache 2.0 inherited from the Spring Boot parent.
+
 ## [1.0.0] — 2026-10-05
 
 The first complete version: email in, priced and approved reply out, with a CRM record and a follow-up.

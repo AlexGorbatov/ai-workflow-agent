@@ -16,6 +16,26 @@
     <packaging>pom</packaging>
     <name>ai-workflow-agent</name>
     <description>AI Business Workflow Agent: email freight requests to approved quotes on a durable state machine</description>
+    <url>https://github.com/AlexGorbatov/ai-workflow-agent</url>
+
+    <!-- Our own; without these the Spring Boot parent's Apache 2.0 license, URL and team would be inherited. -->
+    <licenses>
+        <license>
+            <name>PolyForm Noncommercial License 1.0.0</name>
+            <url>https://polyformproject.org/licenses/noncommercial/1.0.0</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+    <developers>
+        <developer>
+            <name>Alex Gorbatov</name>
+            <url>https://github.com/AlexGorbatov</url>
+        </developer>
+    </developers>
+    <scm>
+        <url>https://github.com/AlexGorbatov/ai-workflow-agent</url>
+        <connection>scm:git:https://github.com/AlexGorbatov/ai-workflow-agent.git</connection>
+    </scm>
 
     <modules>
         <module>approval-token</module>
