@@ -56,6 +56,9 @@ public class RespondStep implements Step {
         this.outbox = outbox;
         this.json = json;
         this.meters = meters;
+        // registered up front, so a service that never fell back shows 0 % on the dashboard instead of no data
+        meters.counter("response.fallback");
+        meters.counter("response.drafts", "rung", "v1", "result", "rejected");
     }
 
     @Override

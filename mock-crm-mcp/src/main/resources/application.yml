@@ -8,7 +8,7 @@ spring:
     mcp:
       server:
         name: mock-crm
-        version: 0.1.0
+        version: 1.0.0
         instructions: "In-memory CRM test double for ai-workflow-agent. WRITE tools require approvalToken and idempotencyKey."
         type: sync
         protocol: streamable

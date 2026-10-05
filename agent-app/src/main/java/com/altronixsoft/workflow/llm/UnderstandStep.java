@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
@@ -24,6 +25,7 @@ public class UnderstandStep implements Step {
 
     static final String PROMPT = "understand-v1";
     static final int MAX_CLARIFICATIONS = 2;
+    /** How long a clarification waits for the customer by default ({@code workflow.clarification-timeout}). */
     static final Duration CLARIFICATION_TIMEOUT = Duration.ofHours(72);
 
     private final ChatClient chat;
@@ -31,14 +33,21 @@ public class UnderstandStep implements Step {
     private final FieldValidator validator;
     private final Guards guards;
     private final OutboxService outbox;
+    private final Duration clarificationTimeout;
 
     UnderstandStep(
-            ChatClient chat, PromptLoader prompts, FieldValidator validator, Guards guards, OutboxService outbox) {
+            ChatClient chat,
+            PromptLoader prompts,
+            FieldValidator validator,
+            Guards guards,
+            OutboxService outbox,
+            @Value("${workflow.clarification-timeout:72h}") Duration clarificationTimeout) {
         this.chat = chat;
         this.prompts = prompts;
         this.validator = validator;
         this.guards = guards;
         this.outbox = outbox;
+        this.clarificationTimeout = clarificationTimeout;
     }
 
     @Override
@@ -73,7 +82,7 @@ public class UnderstandStep implements Step {
                 "Re: " + ctx.email().subject(),
                 ClarificationMessage.render(x.language(), missing),
                 ctx.email().messageId());
-        return new StepResult.Wait(QuoteState.AWAIT_REPLY, CLARIFICATION_TIMEOUT, flagged);
+        return new StepResult.Wait(QuoteState.AWAIT_REPLY, clarificationTimeout, flagged);
     }
 
     private Extraction extract(QuoteContext ctx) {

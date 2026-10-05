@@ -9,7 +9,6 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -100,14 +99,11 @@ public class MockApps {
     }
 
     private static Path jar(String module) {
-        try (DirectoryStream<Path> found = Files.newDirectoryStream(JARS, module + "-*-exec.jar")) {
-            for (Path jar : found) {
-                return jar;
-            }
-        } catch (IOException e) {
-            throw new UncheckedIOException("No " + JARS + ": run the tests with ./mvnw verify", e);
+        Path jar = JARS.resolve(module + "-exec.jar");
+        if (!Files.isRegularFile(jar)) {
+            throw new IllegalStateException("No " + jar + ": run the tests with ./mvnw verify");
         }
-        throw new IllegalStateException("No " + module + " jar in " + JARS + ": run the tests with ./mvnw verify");
+        return jar;
     }
 
     private static int freePort() {

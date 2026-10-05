@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.altronixsoft</groupId>
         <artifactId>ai-workflow-agent</artifactId>
-        <version>0.1.0-SNAPSHOT</version>
+        <version>1.0.0</version>
     </parent>
 
     <artifactId>agent-app</artifactId>
@@ -168,6 +168,8 @@
                         </goals>
                         <configuration>
                             <includeClassifiers>exec</includeClassifiers>
+                            <!-- mock-crm-mcp-exec.jar: one name per module, so a version bump replaces the jar -->
+                            <stripVersion>true</stripVersion>
                             <outputDirectory>${project.build.directory}/mock-apps</outputDirectory>
                         </configuration>
                     </execution>
