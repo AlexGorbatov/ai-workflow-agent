@@ -1,0 +1,29 @@
+# Labelled by hand from the email text. draft: true until a person has checked the labels.
+id: i01-en-missing-three
+draft: true
+category: incomplete
+note: "sample 04"
+email:
+  from: marco.rossi@adriaticfoods.test
+  subject: "Pallets Milan -> Lyon"
+  body: |
+    Hi,
+
+    we need to ship some pallets of canned tomatoes from Milan to Lyon next week.
+    Can you send me a price?
+
+    Thanks,
+    Marco
+    Adriatic Foods S.r.l.
+fixtures:
+  customer: STANDARD   # GOLD | STANDARD | NEW | CREDIT_HOLD | AMBIGUOUS (what Enrich would find)
+  cost: 278.08   # carrier cost the rates would return, EUR
+expect:
+  intent: QUOTE_REQUEST
+  fields:   # a list means any of these spellings is right
+    origin: ["Milano", "Milan"]
+    destination: "Lyon"
+    language: "en"
+  missing: ["pallets", "weightKg", "pickupDate"]
+  injection: false
+  route: CLARIFY   # AUTO | APPROVAL | CLARIFY | CLOSED | INVESTIGATE

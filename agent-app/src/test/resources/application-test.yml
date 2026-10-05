@@ -34,3 +34,13 @@ workflow:
   # Tests bring only the steps they need.
   registry:
     require-all-states: false
+
+# Nothing leaves the test JVM: no OTLP export (spans and meters are still recorded in memory).
+management:
+  tracing:
+    export:
+      enabled: false
+  otlp:
+    metrics:
+      export:
+        enabled: false

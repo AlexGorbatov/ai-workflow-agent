@@ -1,0 +1,29 @@
+# Labelled by hand from the email text. draft: true until a person has checked the labels.
+id: a02-pl-shared-domain
+draft: true
+category: ambiguous
+email:
+  from: zamowienia@polmarket.test
+  subject: "Wycena Poznań - Hamburg"
+  body: |
+    Dzień dobry,
+
+    prosimy o wycenę 6 palet, 3 000 kg, z Poznania do Hamburga, odbiór 26 października 2026.
+
+    Dział zamówień PolMarket
+fixtures:
+  customer: AMBIGUOUS   # GOLD | STANDARD | NEW | CREDIT_HOLD | AMBIGUOUS (what Enrich would find)
+  cost: 600   # carrier cost the rates would return, EUR
+expect:
+  intent: QUOTE_REQUEST
+  fields:   # a list means any of these spellings is right
+    origin: ["Poznań", "Poznan"]
+    destination: "Hamburg"
+    weightKg: 3000
+    pallets: 6
+    pickupDate: "2026-10-26"
+    language: "pl"
+    dangerous: false
+  missing: []
+  injection: false
+  route: INVESTIGATE   # AUTO | APPROVAL | CLARIFY | CLOSED | INVESTIGATE

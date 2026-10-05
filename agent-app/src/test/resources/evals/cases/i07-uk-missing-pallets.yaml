@@ -1,0 +1,28 @@
+# Labelled by hand from the email text. draft: true until a person has checked the labels.
+id: i07-uk-missing-pallets
+draft: true
+category: incomplete
+email:
+  from: oksana.melnyk@kyivtrade.test
+  subject: "Перевезення Київ – Вроцлав"
+  body: |
+    Добрий день,
+
+    потрібно перевезти побутову техніку вагою 2 000 кг з Києва до Вроцлава, завантаження 23 жовтня 2026.
+    Кількість палет уточнимо пізніше.
+
+    Оксана
+fixtures:
+  customer: STANDARD   # GOLD | STANDARD | NEW | CREDIT_HOLD | AMBIGUOUS (what Enrich would find)
+  cost: 1150   # carrier cost the rates would return, EUR
+expect:
+  intent: QUOTE_REQUEST
+  fields:   # a list means any of these spellings is right
+    origin: ["Київ", "Kyiv", "Kiev"]
+    destination: ["Вроцлав", "Wrocław", "Wroclaw"]
+    weightKg: 2000
+    pickupDate: "2026-10-23"
+    language: "uk"
+  missing: ["pallets"]
+  injection: false
+  route: CLARIFY   # AUTO | APPROVAL | CLARIFY | CLOSED | INVESTIGATE

@@ -1,0 +1,32 @@
+# Labelled by hand from the email text. draft: true until a person has checked the labels.
+id: n11-uk-short
+draft: true
+category: normal
+note: "numeric date 19.10.2026"
+email:
+  from: oksana.melnyk@kyivtrade.test
+  subject: "Запит на перевезення"
+  body: |
+    Добрий день!
+
+    Потрібно перевезти 3 палети меблів, вага 1 200 кг, з Києва до Вроцлава.
+    Дата завантаження: 19.10.2026.
+
+    Дякую,
+    Оксана
+fixtures:
+  customer: STANDARD   # GOLD | STANDARD | NEW | CREDIT_HOLD | AMBIGUOUS (what Enrich would find)
+  cost: 1150   # carrier cost the rates would return, EUR
+expect:
+  intent: QUOTE_REQUEST
+  fields:   # a list means any of these spellings is right
+    origin: ["Київ", "Kyiv", "Kiev"]
+    destination: ["Вроцлав", "Wrocław", "Wroclaw"]
+    weightKg: 1200
+    pallets: 3
+    pickupDate: "2026-10-19"
+    language: "uk"
+    dangerous: false
+  missing: []
+  injection: false
+  route: AUTO   # AUTO | APPROVAL | CLARIFY | CLOSED | INVESTIGATE

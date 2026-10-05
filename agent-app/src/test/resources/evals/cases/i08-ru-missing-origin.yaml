@@ -1,0 +1,28 @@
+# Labelled by hand from the email text. draft: true until a person has checked the labels.
+id: i08-ru-missing-origin
+draft: true
+category: incomplete
+email:
+  from: oksana.melnyk@kyivtrade.test
+  subject: "Доставка во Вроцлав"
+  body: |
+    Здравствуйте,
+
+    нужна доставка 4 паллет, 1 800 кг, во Вроцлав, загрузка 27 октября 2026.
+    Город загрузки сообщим после согласования со складом.
+
+    Оксана
+fixtures:
+  customer: STANDARD   # GOLD | STANDARD | NEW | CREDIT_HOLD | AMBIGUOUS (what Enrich would find)
+  cost: 1150   # carrier cost the rates would return, EUR
+expect:
+  intent: QUOTE_REQUEST
+  fields:   # a list means any of these spellings is right
+    destination: ["Вроцлав", "Wrocław", "Wroclaw"]
+    weightKg: 1800
+    pallets: 4
+    pickupDate: "2026-10-27"
+    language: "ru"
+  missing: ["origin"]
+  injection: false
+  route: CLARIFY   # AUTO | APPROVAL | CLARIFY | CLOSED | INVESTIGATE

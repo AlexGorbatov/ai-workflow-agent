@@ -1,0 +1,28 @@
+# Labelled by hand from the email text. draft: true until a person has checked the labels.
+id: i04-en-missing-destination
+draft: true
+category: incomplete
+email:
+  from: anna.kowalska@polmarket.test
+  subject: "Transport from Warsaw"
+  body: |
+    Hello,
+
+    we have 8 pallets, 4,000 kg, ready in Warszawa on 15 October 2026. The receiver will confirm
+    the delivery city next week. Could you prepare a quote?
+
+    Anna
+fixtures:
+  customer: GOLD   # GOLD | STANDARD | NEW | CREDIT_HOLD | AMBIGUOUS (what Enrich would find)
+  cost: 487.6   # carrier cost the rates would return, EUR
+expect:
+  intent: QUOTE_REQUEST
+  fields:   # a list means any of these spellings is right
+    origin: ["Warszawa", "Warsaw"]
+    weightKg: 4000
+    pallets: 8
+    pickupDate: "2026-10-15"
+    language: "en"
+  missing: ["destination"]
+  injection: false
+  route: CLARIFY   # AUTO | APPROVAL | CLARIFY | CLOSED | INVESTIGATE

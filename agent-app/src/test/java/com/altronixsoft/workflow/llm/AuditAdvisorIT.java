@@ -69,7 +69,8 @@ class AuditAdvisorIT {
         assertThat(row.getRequest()).contains("Extract the data.");
         assertThat(row.getResponse()).isEqualTo("{\"ok\":true}");
         assertThat(row.getError()).isNull();
-        assertThat(row.getCostEur()).isNull();
+        // the stub model has no price: recorded as 0, not left empty
+        assertThat(row.getCostEur()).isEqualByComparingTo("0");
         assertThat(row.getCreatedAt()).isNotNull();
         assertThat(calls.findByInstanceIdOrderByCreatedAtAsc(instance))
                 .extracting(LlmCall::getId)

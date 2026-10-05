@@ -1,0 +1,40 @@
+name: Evals
+
+# The LLM eval suite on a real model: weekly and on demand, never on pushes or pull requests (ci.yml does not
+# run @Tag("eval") tests). Needs the repository secret OPENAI_API_KEY. The report is kept as an artifact.
+on:
+  schedule:
+    - cron: "17 6 * * 1"   # Mondays 06:17 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: evals
+  cancel-in-progress: false
+
+jobs:
+  evals:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 25
+          cache: maven
+      # the agent-app module needs its siblings in the local repository
+      - run: ./mvnw -B -DskipTests install
+      - name: Run the eval suite
+        run: ./mvnw -B -pl agent-app -Pevals verify
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      - name: Keep the report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-report
+          path: agent-app/target/evals/
+          if-no-files-found: warn

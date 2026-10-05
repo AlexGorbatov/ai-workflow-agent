@@ -1,0 +1,39 @@
+# Labelled by hand from the email text. draft: true until a person has checked the labels.
+id: n04-en-adr-credit-hold
+draft: true
+category: normal
+note: "sample 06: DANGEROUS_GOODS and CREDIT_HOLD"
+email:
+  from: jonas.weber@rheinchemie.test
+  subject: "ADR shipment Duisburg -> Rotterdam"
+  body: |
+    Hello,
+
+    please quote a dangerous goods transport:
+
+    - 10 pallets of paint, UN1263, ADR class 3, packing group III
+    - Total weight 6,500 kg
+    - Pickup: Wednesday, 7 October 2026 in Duisburg (47059), Germany
+    - Delivery: Rotterdam (3089), Netherlands
+
+    The driver needs a valid ADR certificate.
+
+    Best,
+    Jonas Weber
+    Rhein Chemie GmbH
+fixtures:
+  customer: CREDIT_HOLD   # GOLD | STANDARD | NEW | CREDIT_HOLD | AMBIGUOUS (what Enrich would find)
+  cost: 230   # carrier cost the rates would return, EUR
+expect:
+  intent: QUOTE_REQUEST
+  fields:   # a list means any of these spellings is right
+    origin: "Duisburg"
+    destination: "Rotterdam"
+    weightKg: 6500
+    pallets: 10
+    pickupDate: "2026-10-07"
+    language: "en"
+    dangerous: true
+  missing: []
+  injection: false
+  route: APPROVAL   # AUTO | APPROVAL | CLARIFY | CLOSED | INVESTIGATE

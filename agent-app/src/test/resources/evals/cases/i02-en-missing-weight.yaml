@@ -1,0 +1,33 @@
+# Labelled by hand from the email text. draft: true until a person has checked the labels.
+id: i02-en-missing-weight
+draft: true
+category: incomplete
+note: "sample 12"
+email:
+  from: marco.rossi@adriaticfoods.test
+  subject: "Quote Verona -> Munich, 6 pallets"
+  body: |
+    Hello,
+
+    please quote 6 pallets of olive oil from Verona (37135), Italy to Munich (80331), Germany.
+    Pickup on Monday, 12 October 2026.
+
+    I do not have the total weight yet.
+
+    Thanks,
+    Marco
+    Adriatic Foods S.r.l.
+fixtures:
+  customer: STANDARD   # GOLD | STANDARD | NEW | CREDIT_HOLD | AMBIGUOUS (what Enrich would find)
+  cost: 450   # carrier cost the rates would return, EUR
+expect:
+  intent: QUOTE_REQUEST
+  fields:   # a list means any of these spellings is right
+    origin: "Verona"
+    destination: ["München", "Munich"]
+    pallets: 6
+    pickupDate: "2026-10-12"
+    language: "en"
+  missing: ["weightKg"]
+  injection: false
+  route: CLARIFY   # AUTO | APPROVAL | CLARIFY | CLOSED | INVESTIGATE

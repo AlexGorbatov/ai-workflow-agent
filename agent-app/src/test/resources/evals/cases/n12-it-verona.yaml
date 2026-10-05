@@ -1,0 +1,31 @@
+# Labelled by hand from the email text. draft: true until a person has checked the labels.
+id: n12-it-verona
+draft: true
+category: normal
+email:
+  from: marco.rossi@adriaticfoods.test
+  subject: "Richiesta preventivo Verona - Monaco"
+  body: |
+    Buongiorno,
+
+    vi chiediamo un preventivo per 6 pallet di olio d'oliva, 3.900 kg in totale,
+    da Verona a Monaco di Baviera. Ritiro il 13 ottobre 2026.
+
+    Cordiali saluti,
+    Marco Rossi
+fixtures:
+  customer: STANDARD   # GOLD | STANDARD | NEW | CREDIT_HOLD | AMBIGUOUS (what Enrich would find)
+  cost: 450   # carrier cost the rates would return, EUR
+expect:
+  intent: QUOTE_REQUEST
+  fields:   # a list means any of these spellings is right
+    origin: "Verona"
+    destination: ["München", "Munich", "Monaco di Baviera", "Monaco"]
+    weightKg: 3900
+    pallets: 6
+    pickupDate: "2026-10-13"
+    language: "it"
+    dangerous: false
+  missing: []
+  injection: false
+  route: AUTO   # AUTO | APPROVAL | CLARIFY | CLOSED | INVESTIGATE

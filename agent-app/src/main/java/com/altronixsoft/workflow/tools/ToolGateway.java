@@ -1,6 +1,10 @@
 package com.altronixsoft.workflow.tools;
 
 import com.altronixsoft.workflow.engine.NonRetryableStepException;
+import io.micrometer.context.ContextExecutorService;
+import io.micrometer.context.ContextSnapshotFactory;
+import io.micrometer.observation.Observation;
+import io.micrometer.observation.ObservationRegistry;
 import io.modelcontextprotocol.json.schema.JsonSchemaValidator;
 import io.modelcontextprotocol.json.schema.jackson3.DefaultJsonSchemaValidator;
 import jakarta.annotation.PreDestroy;
@@ -52,14 +56,24 @@ public class ToolGateway {
     private final ToolAudit audit;
     private final JsonMapper json;
     private final JsonSchemaValidator validator;
-    private final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
+    private final ObservationRegistry observations;
+    // the tool runs on its own thread; the snapshot carries the current span there, so HTTP and MCP spans nest
+    private final ExecutorService executor = ContextExecutorService.wrap(
+            Executors.newVirtualThreadPerTaskExecutor(),
+            () -> ContextSnapshotFactory.builder().build().captureAll());
 
-    ToolGateway(ToolRegistry registry, ToolsProperties properties, ToolAudit audit, JsonMapper json) {
+    ToolGateway(
+            ToolRegistry registry,
+            ToolsProperties properties,
+            ToolAudit audit,
+            JsonMapper json,
+            ObservationRegistry observations) {
         this.registry = registry;
         this.properties = properties;
         this.audit = audit;
         this.json = json;
         this.validator = new DefaultJsonSchemaValidator(json);
+        this.observations = observations;
     }
 
     /**
@@ -68,6 +82,33 @@ public class ToolGateway {
      * {@code approvalToken} argument; the caller provides {@code idempotencyKey}.
      */
     public String call(String tool, Map<String, Object> args, CallContext cc) {
+        // a span per call, inside the step's span; tool and kind are bounded, the instance id stays on the span
+        ToolPolicy known = properties.policies().get(tool);
+        Observation observation = Observation.createNotStarted("workflow.tool", observations)
+                .contextualName("tool " + tool)
+                .lowCardinalityKeyValue("tool", known == null ? "unknown" : tool)
+                .lowCardinalityKeyValue(
+                        "kind", known == null ? "none" : known.kind().name())
+                .highCardinalityKeyValue("instanceId", String.valueOf(cc.instanceId()))
+                .start();
+        try (Observation.Scope scope = observation.openScope()) {
+            String result = audited(tool, args, cc);
+            observation.lowCardinalityKeyValue("status", "OK");
+            return result;
+        } catch (ToolDenied e) {
+            observation.lowCardinalityKeyValue("status", "DENIED");
+            observation.error(e);
+            throw e;
+        } catch (RuntimeException e) {
+            observation.lowCardinalityKeyValue("status", "FAILED");
+            observation.error(e);
+            throw e;
+        } finally {
+            observation.stop();
+        }
+    }
+
+    private String audited(String tool, Map<String, Object> args, CallContext cc) {
         Map<String, Object> arguments = args == null ? Map.of() : args;
         ToolPolicy policy = properties.policies().get(tool);
         ToolKind kind = policy == null ? null : policy.kind();

@@ -12,7 +12,7 @@
 | [M4](M4-pricing-policy.md) | Цена, правила, Investigator | сделано (T4.1–T4.4) |
 | [M5](M5-approvals.md) | Approvals, роли, SLA, UI | сделано (T5.1–T5.6) |
 | [M6](M6-respond-record.md) | Ответ, CRM, follow-up | сделано (T6.1–T6.5) |
-| [M7](M7-observability-evals.md) | Наблюдаемость и evals | не начато |
+| [M7](M7-observability-evals.md) | Наблюдаемость и evals | сделано (T7.1–T7.5); 40 eval-кейсов в статусе draft |
 | [M8](M8-packaging.md) | README, ADR, видео | не начато |
 
 ## Как пользоваться

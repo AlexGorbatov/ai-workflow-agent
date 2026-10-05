@@ -1,0 +1,24 @@
+# Labelled by hand from the email text. draft: true until a person has checked the labels.
+id: x01-en-invoice
+draft: true
+category: not-a-request
+note: "sample 09"
+email:
+  from: accounting@polmarket.test
+  subject: "Invoice INV-2026-0931"
+  body: |
+    Hello,
+
+    could you please resend invoice INV-2026-0931 for the August shipment? Our copy got lost during a
+    system migration.
+
+    Thank you,
+    PolMarket Accounting
+fixtures:
+  customer: NONE   # GOLD | STANDARD | NEW | CREDIT_HOLD | AMBIGUOUS (what Enrich would find)
+  cost: 600   # carrier cost the rates would return, EUR
+expect:
+  intent: OTHER
+  missing: []
+  injection: false
+  route: CLOSED   # AUTO | APPROVAL | CLARIFY | CLOSED | INVESTIGATE

@@ -1,0 +1,33 @@
+# Labelled by hand from the email text. draft: true until a person has checked the labels.
+id: n10-ru-kyiv-wroclaw
+draft: true
+category: normal
+email:
+  from: oksana.melnyk@kyivtrade.test
+  subject: "Запрос: Киев - Вроцлав"
+  body: |
+    Здравствуйте,
+
+    просим рассчитать перевозку: 5 паллет бытовой техники, общий вес 2 500 кг,
+    из Киева во Вроцлав. Загрузка 21 октября 2026 года.
+
+    Опасных грузов нет.
+
+    С уважением,
+    Оксана Мельник
+fixtures:
+  customer: STANDARD   # GOLD | STANDARD | NEW | CREDIT_HOLD | AMBIGUOUS (what Enrich would find)
+  cost: 1150   # carrier cost the rates would return, EUR
+expect:
+  intent: QUOTE_REQUEST
+  fields:   # a list means any of these spellings is right
+    origin: ["Киев", "Київ", "Kyiv", "Kiev"]
+    destination: ["Вроцлав", "Wrocław", "Wroclaw"]
+    weightKg: 2500
+    pallets: 5
+    pickupDate: "2026-10-21"
+    language: "ru"
+    dangerous: false
+  missing: []
+  injection: false
+  route: AUTO   # AUTO | APPROVAL | CLARIFY | CLOSED | INVESTIGATE
