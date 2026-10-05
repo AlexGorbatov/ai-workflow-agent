@@ -1,0 +1,33 @@
+# Labelled by hand from the email text. draft: true until a person has checked the labels.
+id: i03-en-missing-date
+draft: true
+category: incomplete
+note: "sample 13"
+email:
+  from: anna.kowalska@polmarket.test
+  subject: "Quote Poznan -> Hamburg, 10 pallets"
+  body: |
+    Hello,
+
+    we need a quote for 10 pallets of packaged food, 5,400 kg in total, from Poznan (61-001), Poland
+    to Hamburg (20095), Germany. No dangerous goods.
+
+    We have not fixed the pickup date yet.
+
+    Best regards,
+    Anna Kowalska
+    PolMarket Sp. z o.o.
+fixtures:
+  customer: GOLD   # GOLD | STANDARD | NEW | CREDIT_HOLD | AMBIGUOUS (what Enrich would find)
+  cost: 600   # carrier cost the rates would return, EUR
+expect:
+  intent: QUOTE_REQUEST
+  fields:   # a list means any of these spellings is right
+    origin: ["Poznań", "Poznan"]
+    destination: "Hamburg"
+    weightKg: 5400
+    pallets: 10
+    language: "en"
+  missing: ["pickupDate"]
+  injection: false
+  route: CLARIFY   # AUTO | APPROVAL | CLARIFY | CLOSED | INVESTIGATE

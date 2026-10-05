@@ -1,0 +1,83 @@
+# Local infrastructure for agent-app. The three Spring Boot apps run from Maven, not from here.
+#   docker compose up -d        start everything
+#   docker compose ps           health of each service
+# Values come from .env when present (see .env.example); defaults below are local-only.
+# Host ports are overridable when another stack already uses them — except Keycloak's 8180,
+# which is part of the token issuer.
+name: ai-workflow-agent
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-workflow}
+      POSTGRES_USER: ${POSTGRES_USER:-workflow}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-workflow}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  # Identity provider in dev mode; realm "workflow" is imported on start (users olena, max).
+  # Admin console: http://localhost:8180 (admin / admin, local only).
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.7.4
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      KC_HEALTH_ENABLED: "true"
+      KC_HTTP_PORT: "8180"
+    volumes:
+      - ./keycloak/workflow-realm.json:/opt/keycloak/data/import/workflow-realm.json:ro
+    # Fixed port: the token's "iss" must equal the issuer-uri agent-app validates against.
+    ports:
+      - "127.0.0.1:8180:8180"
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - "exec 3<>/dev/tcp/127.0.0.1/9000 && printf 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && grep -q UP <&3"
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+
+  # SMTP sink with a REST API: inbound customer emails (scripts/send-mail.sh) and the agent's replies.
+  # UI and API: http://localhost:8025
+  mailpit:
+    image: axllent/mailpit:v1.31.3
+    environment:
+      MP_MAX_MESSAGES: "5000"
+      MP_SMTP_AUTH_ACCEPT_ANY: "true"
+      MP_SMTP_AUTH_ALLOW_INSECURE: "true"
+    ports:
+      - "127.0.0.1:${SMTP_PORT:-1025}:1025"
+      - "127.0.0.1:${MAILPIT_UI_PORT:-8025}:8025"
+    healthcheck:
+      test: ["CMD", "/mailpit", "readyz"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  # OpenTelemetry backend in one container (Grafana, Tempo, Prometheus, Loki). agent-app sends traces and
+  # metrics to it over OTLP (management.* in application.yml). Grafana: http://localhost:3000, dashboard
+  # "AI Workflow Agent" provisioned from ops/grafana.
+  lgtm:
+    image: grafana/otel-lgtm:0.34.0
+    ports:
+      - "127.0.0.1:${GRAFANA_PORT:-3000}:3000"
+      - "127.0.0.1:${OTLP_GRPC_PORT:-4317}:4317"
+      - "127.0.0.1:${OTLP_HTTP_PORT:-4318}:4318"
+    volumes:
+      - lgtm-data:/data
+      - ./ops/grafana/provisioning/workflow-dashboards.yaml:/otel-lgtm/grafana/conf/provisioning/dashboards/workflow-dashboards.yaml:ro
+      - ./ops/grafana/dashboards:/otel-lgtm/dashboards/ai-workflow-agent:ro
+
+volumes:
+  postgres-data:
+  lgtm-data:

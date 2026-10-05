@@ -1,0 +1,10 @@
+# Azure OpenAI through the unified OpenAI starter (Spring AI 2.x has no separate Azure module).
+# Activate with --spring.profiles.active=azure.
+spring:
+  ai:
+    openai:
+      microsoft-foundry: true
+      base-url: ${AZURE_OPENAI_ENDPOINT}
+      api-key: ${AZURE_OPENAI_API_KEY}
+      chat:
+        microsoft-deployment-name: ${AZURE_OPENAI_CHAT_DEPLOYMENT}

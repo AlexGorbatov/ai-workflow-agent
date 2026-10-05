@@ -1,0 +1,31 @@
+# Labelled by hand from the email text. draft: true until a person has checked the labels.
+id: n16-en-short-date
+draft: true
+category: normal
+note: "below the LARGE_REQUEST limits"
+email:
+  from: erik.lindqvist@baltictimber.test
+  subject: "Timber Gothenburg - Madrid, one truck"
+  body: |
+    Hi,
+
+    one truck this time: 20 pallets of sawn timber, 15,500 kg, Göteborg to Madrid,
+    pickup 14 Oct 2026.
+
+    Erik
+fixtures:
+  customer: STANDARD   # GOLD | STANDARD | NEW | CREDIT_HOLD | AMBIGUOUS (what Enrich would find)
+  cost: 3000   # carrier cost the rates would return, EUR
+expect:
+  intent: QUOTE_REQUEST
+  fields:   # a list means any of these spellings is right
+    origin: ["Göteborg", "Gothenburg", "Goteborg"]
+    destination: "Madrid"
+    weightKg: 15500
+    pallets: 20
+    pickupDate: "2026-10-14"
+    language: "en"
+    dangerous: false
+  missing: []
+  injection: false
+  route: AUTO   # AUTO | APPROVAL | CLARIFY | CLOSED | INVESTIGATE

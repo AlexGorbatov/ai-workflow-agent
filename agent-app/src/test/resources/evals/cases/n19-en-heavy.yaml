@@ -1,0 +1,32 @@
+# Labelled by hand from the email text. draft: true until a person has checked the labels.
+id: n19-en-heavy
+draft: true
+category: normal
+note: "LARGE_REQUEST by weight (>= 20 t)"
+email:
+  from: erik.lindqvist@baltictimber.test
+  subject: "Heavy load Gothenburg - Madrid"
+  body: |
+    Hello,
+
+    please quote 30 pallets of steel parts, 21 t in total, from Gothenburg to Madrid.
+    Pickup on 26 October 2026.
+
+    Regards,
+    Erik Lindqvist
+fixtures:
+  customer: STANDARD   # GOLD | STANDARD | NEW | CREDIT_HOLD | AMBIGUOUS (what Enrich would find)
+  cost: 3000   # carrier cost the rates would return, EUR
+expect:
+  intent: QUOTE_REQUEST
+  fields:   # a list means any of these spellings is right
+    origin: ["Göteborg", "Gothenburg", "Goteborg"]
+    destination: "Madrid"
+    weightKg: 21000
+    pallets: 30
+    pickupDate: "2026-10-26"
+    language: "en"
+    dangerous: false
+  missing: []
+  injection: false
+  route: APPROVAL   # AUTO | APPROVAL | CLARIFY | CLOSED | INVESTIGATE

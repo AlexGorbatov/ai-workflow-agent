@@ -1,0 +1,33 @@
+# Demo profile: scripts/demo.sh (and spring-boot:test-run). Everything happens in seconds or minutes instead of
+# days, so a whole quote life fits into a demo: mail is read every 2 s, a clarification waits 2 minutes, an
+# approval task escalates after 2 minutes, a sent quote gets its reminder after 1 minute and closes after another.
+logging:
+  level:
+    com.altronixsoft.workflow: DEBUG
+
+workflow:
+  intake:
+    poll-interval: 2s
+  outbox:
+    relay-interval: 1s
+    retry-backoff-base: 2s
+  engine:
+    retry-backoff-base: 1s
+  clarification-timeout: 2m
+  follow-up:
+    after: 60s
+
+policy:
+  approval-sla: 2m
+
+# Every trace in the demo, exported to the local otel-lgtm (docker compose up -d lgtm).
+management:
+  tracing:
+    sampling:
+      probability: 1.0
+    export:
+      enabled: true
+  otlp:
+    metrics:
+      export:
+        enabled: true

@@ -1,0 +1,38 @@
+# Labelled by hand from the email text. draft: true until a person has checked the labels.
+id: n06-uk-new-customer
+draft: true
+category: normal
+note: "sample 11: Cyrillic, NEW_CUSTOMER"
+email:
+  from: oksana.melnyk@kyivtrade.test
+  subject: "Прорахунок доставки Київ – Вроцлав"
+  body: |
+    Добрий день,
+
+    просимо розрахувати вартість перевезення:
+
+    - 8 євро-палет з побутовою технікою, загальна вага 3 600 кг
+    - Завантаження: 9 жовтня 2026, Київ (03150), Україна
+    - Доставка: Вроцлав (50-001), Польща
+
+    Небезпечних вантажів немає.
+
+    З повагою,
+    Оксана Мельник
+    KyivTrade ТОВ
+fixtures:
+  customer: NEW   # GOLD | STANDARD | NEW | CREDIT_HOLD | AMBIGUOUS (what Enrich would find)
+  cost: 1150   # carrier cost the rates would return, EUR
+expect:
+  intent: QUOTE_REQUEST
+  fields:   # a list means any of these spellings is right
+    origin: ["Київ", "Kyiv", "Kiev", "Kijów"]
+    destination: ["Вроцлав", "Wrocław", "Wroclaw"]
+    weightKg: 3600
+    pallets: 8
+    pickupDate: "2026-10-09"
+    language: "uk"
+    dangerous: false
+  missing: []
+  injection: false
+  route: APPROVAL   # AUTO | APPROVAL | CLARIFY | CLOSED | INVESTIGATE

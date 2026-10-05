@@ -1,0 +1,29 @@
+# Labelled by hand from the email text. draft: true until a person has checked the labels.
+id: i05-de-missing-weight
+draft: true
+category: incomplete
+email:
+  from: katrin.hoffmann@frischkette.test
+  subject: "Angebot Hamburg - Wien"
+  body: |
+    Guten Tag,
+
+    bitte ein Angebot für 9 Paletten Käse von Hamburg nach Wien, Abholung am 12.10.2026.
+    Das Gewicht reichen wir nach.
+
+    Grüße
+    Katrin Hoffmann
+fixtures:
+  customer: STANDARD   # GOLD | STANDARD | NEW | CREDIT_HOLD | AMBIGUOUS (what Enrich would find)
+  cost: 1000   # carrier cost the rates would return, EUR
+expect:
+  intent: QUOTE_REQUEST
+  fields:   # a list means any of these spellings is right
+    origin: "Hamburg"
+    destination: ["Wien", "Vienna"]
+    pallets: 9
+    pickupDate: "2026-10-12"
+    language: "de"
+  missing: ["weightKg"]
+  injection: false
+  route: CLARIFY   # AUTO | APPROVAL | CLARIFY | CLOSED | INVESTIGATE

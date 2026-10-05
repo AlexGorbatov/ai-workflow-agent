@@ -1,0 +1,24 @@
+# Labelled by hand from the email text. draft: true until a person has checked the labels.
+id: x02-en-shipment-status
+draft: true
+category: not-a-request
+note: "sample 14"
+email:
+  from: erik.lindqvist@baltictimber.test
+  subject: "Where is my shipment?"
+  body: |
+    Hi,
+
+    the truck for order 4471 was due in Madrid yesterday and the receiver has not seen it. Can you tell
+    me where it is right now?
+
+    Erik Lindqvist
+    Baltic Timber AB
+fixtures:
+  customer: NONE   # GOLD | STANDARD | NEW | CREDIT_HOLD | AMBIGUOUS (what Enrich would find)
+  cost: 600   # carrier cost the rates would return, EUR
+expect:
+  intent: SHIPMENT_STATUS
+  missing: []
+  injection: false
+  route: CLOSED   # AUTO | APPROVAL | CLARIFY | CLOSED | INVESTIGATE

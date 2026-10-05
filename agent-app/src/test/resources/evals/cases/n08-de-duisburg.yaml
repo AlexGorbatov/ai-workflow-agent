@@ -1,0 +1,31 @@
+# Labelled by hand from the email text. draft: true until a person has checked the labels.
+id: n08-de-duisburg
+draft: true
+category: normal
+email:
+  from: jonas.weber@rheinchemie.test
+  subject: "Anfrage Duisburg - Rotterdam"
+  body: |
+    Hallo,
+
+    bitte um ein Angebot für 6 Paletten Kunststoffgranulat (kein Gefahrgut), 4.200 kg,
+    von Duisburg nach Rotterdam. Abholung am 14.10.2026.
+
+    Danke und Gruß
+    Jonas Weber
+fixtures:
+  customer: STANDARD   # GOLD | STANDARD | NEW | CREDIT_HOLD | AMBIGUOUS (what Enrich would find)
+  cost: 230   # carrier cost the rates would return, EUR
+expect:
+  intent: QUOTE_REQUEST
+  fields:   # a list means any of these spellings is right
+    origin: "Duisburg"
+    destination: "Rotterdam"
+    weightKg: 4200
+    pallets: 6
+    pickupDate: "2026-10-14"
+    language: "de"
+    dangerous: false
+  missing: []
+  injection: false
+  route: AUTO   # AUTO | APPROVAL | CLARIFY | CLOSED | INVESTIGATE

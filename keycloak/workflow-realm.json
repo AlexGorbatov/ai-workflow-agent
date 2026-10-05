@@ -1,0 +1,101 @@
+{
+  "realm": "workflow",
+  "displayName": "ai-workflow-agent (local development)",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "accessTokenLifespan": 900,
+  "roles": {
+    "realm": [
+      {
+        "name": "operator",
+        "description": "Sees all workflow instances, approves standard exceptions, retries or cancels failed instances"
+      },
+      {
+        "name": "approver",
+        "description": "Approves high-value, low-margin and credit-risk quotes"
+      }
+    ]
+  },
+  "users": [
+    {
+      "username": "olena",
+      "email": "olena@nordline.test",
+      "firstName": "Olena",
+      "lastName": "Demo",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "olena",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "default-roles-workflow",
+        "operator"
+      ]
+    },
+    {
+      "username": "max",
+      "email": "max@nordline.test",
+      "firstName": "Max",
+      "lastName": "Demo",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "max",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "default-roles-workflow",
+        "operator",
+        "approver"
+      ]
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "workflow-web",
+      "name": "ai-workflow-agent operator UI",
+      "description": "Public client for local development. Direct access grants are enabled only so tokens can be fetched with curl; never enable them in a real realm.",
+      "enabled": true,
+      "publicClient": true,
+      "protocol": "openid-connect",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "implicitFlowEnabled": false,
+      "serviceAccountsEnabled": false,
+      "redirectUris": [
+        "http://localhost:5173/*",
+        "http://localhost:8080/*"
+      ],
+      "webOrigins": [
+        "http://localhost:5173",
+        "http://localhost:8080"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:5173/*##http://localhost:8080/*"
+      },
+      "protocolMappers": [
+        {
+          "name": "audience workflow-api",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.custom.audience": "workflow-api",
+            "access.token.claim": "true",
+            "id.token.claim": "false",
+            "introspection.token.claim": "true"
+          }
+        }
+      ]
+    }
+  ]
+}

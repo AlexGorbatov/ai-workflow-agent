@@ -1,0 +1,31 @@
+# Labelled by hand from the email text. draft: true until a person has checked the labels.
+id: n13-es-valencia
+draft: true
+category: normal
+email:
+  from: lucia.garcia@iberiaretail.test
+  subject: "Presupuesto Valencia - Lyon"
+  body: |
+    Hola,
+
+    necesitamos presupuesto para 6 palés de calzado, 3.100 kg en total, de Valencia a Lyon.
+    Recogida el 13 de octubre de 2026.
+
+    Gracias,
+    Lucía García
+fixtures:
+  customer: STANDARD   # GOLD | STANDARD | NEW | CREDIT_HOLD | AMBIGUOUS (what Enrich would find)
+  cost: 421.52   # carrier cost the rates would return, EUR
+expect:
+  intent: QUOTE_REQUEST
+  fields:   # a list means any of these spellings is right
+    origin: "Valencia"
+    destination: "Lyon"
+    weightKg: 3100
+    pallets: 6
+    pickupDate: "2026-10-13"
+    language: "es"
+    dangerous: false
+  missing: []
+  injection: false
+  route: AUTO   # AUTO | APPROVAL | CLARIFY | CLOSED | INVESTIGATE

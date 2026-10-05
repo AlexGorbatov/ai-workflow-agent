@@ -1,0 +1,13 @@
+# Local chat model through LM Studio's OpenAI-compatible server: a real model with no API key and no
+# data leaving the machine. Opt-in only: LM_STUDIO=1 ./mvnw -pl agent-app spring-boot:test-run.
+# Check what is loaded with: curl http://127.0.0.1:1234/v1/models
+spring:
+  ai:
+    model:
+      chat: openai
+    openai:
+      base-url: ${LMSTUDIO_BASE_URL:http://127.0.0.1:1234/v1}
+      api-key: not-used-by-lm-studio
+      chat:
+        options:
+          model: ${LMSTUDIO_MODEL}

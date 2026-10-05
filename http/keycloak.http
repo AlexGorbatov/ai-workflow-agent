@@ -1,0 +1,25 @@
+### Tokens from the local Keycloak (docker compose up -d). Demo users only.
+### For IntelliJ HTTP Client / VS Code REST Client.
+
+@keycloak = http://localhost:8180
+
+### OpenID configuration of realm "workflow"
+GET {{keycloak}}/realms/workflow/.well-known/openid-configuration
+
+### Token as operator (olena)
+# @name tokenOlena
+POST {{keycloak}}/realms/workflow/protocol/openid-connect/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=password&client_id=workflow-web&username=olena&password=olena
+
+> {% client.global.set("olena_token", response.body.access_token); %}
+
+### Token as operator + approver (max)
+# @name tokenMax
+POST {{keycloak}}/realms/workflow/protocol/openid-connect/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=password&client_id=workflow-web&username=max&password=max
+
+> {% client.global.set("max_token", response.body.access_token); %}

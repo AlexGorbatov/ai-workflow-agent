@@ -1,0 +1,186 @@
+# Default profile = OpenAI against the infrastructure from compose.yaml (docker compose up -d).
+# Secrets are placeholders without defaults: a missing one fails at startup instead of running wrong.
+server:
+  port: 8080
+
+spring:
+  application:
+    name: agent-app
+  # The quote policy lives in its own file so it can be reviewed and versioned apart from wiring.
+  config:
+    import: classpath:policy/rules.yml
+  threads:
+    virtual:
+      enabled: true
+  # Errors as RFC 9457 problem details, validation errors included.
+  mvc:
+    problemdetails:
+      enabled: true
+
+  # Local Mailpit from compose.yaml: SMTP 1025, REST API 8025 (workflow.mail.mailpit-url).
+  mail:
+    host: ${SMTP_HOST:localhost}
+    port: ${SMTP_PORT:1025}
+
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:workflow}
+    username: ${POSTGRES_USER:workflow}
+    password: ${POSTGRES_PASSWORD}
+
+  # Flyway owns the schema; Hibernate only checks that entities match it.
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    locations: classpath:db/migration
+
+  ai:
+    # Only the chat model is used. Everything else from the OpenAI starter stays off, so no bean
+    # demands credentials we never use.
+    model:
+      chat: openai
+      embedding: none
+      image: none
+      audio:
+        speech: none
+        transcription: none
+      moderation: none
+    openai:
+      api-key: ${OPENAI_API_KEY}
+      # Model calls are bounded: a hung provider must not hold a workflow step for minutes.
+      timeout: ${OPENAI_TIMEOUT:30s}
+      max-retries: ${OPENAI_MAX_RETRIES:2}
+      chat:
+        timeout: ${OPENAI_TIMEOUT:30s}
+        max-retries: ${OPENAI_MAX_RETRIES:2}
+        max-completion-tokens: ${OPENAI_MAX_COMPLETION_TOKENS:1000}
+    # Prompts and completions carry customer email text: never log them. Defaults, set explicitly
+    # so turning one on is a visible change.
+    chat:
+      observations:
+        log-prompt: false
+        log-completion: false
+      client:
+        observations:
+          log-prompt: false
+          log-completion: false
+
+  # The token's "iss" must equal this exactly; defaults point at the realm from compose.yaml.
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${OAUTH2_ISSUER_URI:http://localhost:8180/realms/workflow}
+          audiences: ${OAUTH2_AUDIENCE:workflow-api}
+
+workflow:
+  # The real steps. Off only where tests supply fake ones.
+  real-steps: true
+  # Every working state must have its step: startup fails if one goes missing.
+  registry:
+    require-all-states: true
+  # How long to wait for the customer after the quote, and again after the one reminder.
+  follow-up:
+    after: ${FOLLOW_UP_AFTER:72h}
+  # A mail that cannot be sent is tried again after 30s, 1m, 2m, 4m; after the 5th failure it is FAILED.
+  outbox:
+    max-attempts: 5
+    retry-backoff-base: 30s
+  # Who gets the mail when an approval task is still open at its SLA (policy.approval-sla).
+  approvals:
+    escalation-to: ${APPROVALS_ESCALATION_TO:approvals-lead@nordline.test}
+  # The only external tools the agent may call, and where. A tool without a policy is refused; the allowed
+  # states are fixed here, never by anything an email says. Brackets keep the camelCase tool names as keys.
+  tools:
+    crm-url: ${CRM_URL:http://localhost:8091}
+    crm-endpoint: /mcp
+    rates-url: ${RATES_URL:http://localhost:8092}
+    # slow or error: sent as X-Simulate to mock-rates, to demo timeouts and outages
+    rates-simulate: ${RATES_SIMULATE:}
+    policies:
+      "[findCustomersByEmail]":
+        kind: READ
+        allowed-in: [UNDERSTOOD, INVESTIGATING]
+        timeout: 5s
+      "[getCreditStatus]":
+        kind: READ
+        allowed-in: [UNDERSTOOD, INVESTIGATING]
+        timeout: 5s
+      "[getRates]":
+        kind: READ
+        allowed-in: [ENRICHED, INVESTIGATING]
+        timeout: 5s
+      "[createOpportunity]":
+        kind: WRITE
+        allowed-in: [RESPONDED]
+        timeout: 10s
+
+# How a carrier cost becomes a price: price = round(cost * (1 + margin) * (1 + fuel) + adr). Percents as numbers.
+pricing:
+  margin-by-tier:
+    GOLD: 12
+    STANDARD: 18
+  new-customer-margin: 22
+  fuel-surcharge-pct: 8
+  adr-surcharge: 150
+  round-to: 1
+  validity-days: 14
+  max-transit-days: 5
+
+# HMAC secret for approval tokens; the CRM verifies them with the same one. No default on purpose.
+approval:
+  token:
+    secret: ${APPROVAL_TOKEN_SECRET}
+
+# Model prices in EUR per 1M tokens, for llm_call.cost_eur and the llm.cost.eur metric. Matched by the longest
+# prefix of the model name the provider reports; a model without a price counts as 0 (and is logged once).
+llm:
+  pricing:
+    gpt-4.1-mini:
+      input: 0.37
+      output: 1.47
+    gpt-4.1:
+      input: 1.84
+      output: 7.36
+    gpt-4o-mini:
+      input: 0.14
+      output: 0.55
+
+# health (with liveness/readiness probes, status only), info, and prometheus behind the bearer token like every
+# other endpoint (SecurityConfig). env, configprops and heapdump would expose secrets and email content.
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      show-details: never
+      show-components: never
+      probes:
+        enabled: true
+  # Traces and metrics go over OTLP to grafana/otel-lgtm (compose.yaml). A tenth of the traces in this profile;
+  # the demo profile keeps all of them.
+  tracing:
+    sampling:
+      probability: ${TRACING_SAMPLING_PROBABILITY:0.1}
+  opentelemetry:
+    tracing:
+      export:
+        otlp:
+          endpoint: ${OTLP_ENDPOINT:http://localhost:4318}/v1/traces
+  otlp:
+    metrics:
+      export:
+        url: ${OTLP_ENDPOINT:http://localhost:4318}/v1/metrics
+        step: 15s
+  observations:
+    key-values:
+      application: agent-app
+  # Buckets for the observed timers, so that dashboards can compute percentiles (workflow.step.duration has them).
+  metrics:
+    distribution:
+      percentiles-histogram:
+        workflow.tool: true
+        spring.ai.chat.client: true

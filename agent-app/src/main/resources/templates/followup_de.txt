@@ -1,0 +1,8 @@
+Subject: Erinnerung: Ihr Frachtangebot {origin} - {destination}
+Guten Tag {customer},
+
+eine kurze Erinnerung an unser Angebot für {origin} - {destination}: {price} {currency}, gültig bis {validUntil}.
+Zur Buchung antworten Sie einfach auf diese E-Mail.
+
+Mit freundlichen Grüßen
+Nordline Logistics

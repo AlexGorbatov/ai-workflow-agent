@@ -1,0 +1,32 @@
+# Labelled by hand from the email text. draft: true until a person has checked the labels.
+id: n18-de-many-pallets
+draft: true
+category: normal
+note: "LARGE_REQUEST by pallets (>= 33)"
+email:
+  from: katrin.hoffmann@frischkette.test
+  subject: "Großauftrag Hamburg - Wien"
+  body: |
+    Guten Tag,
+
+    wir planen eine Sammelsendung: 34 Paletten Getränke, insgesamt 18.000 kg,
+    von Hamburg nach Wien. Abholung am 21.10.2026.
+
+    Viele Grüße
+    Katrin Hoffmann
+fixtures:
+  customer: STANDARD   # GOLD | STANDARD | NEW | CREDIT_HOLD | AMBIGUOUS (what Enrich would find)
+  cost: 1000   # carrier cost the rates would return, EUR
+expect:
+  intent: QUOTE_REQUEST
+  fields:   # a list means any of these spellings is right
+    origin: "Hamburg"
+    destination: ["Wien", "Vienna"]
+    weightKg: 18000
+    pallets: 34
+    pickupDate: "2026-10-21"
+    language: "de"
+    dangerous: false
+  missing: []
+  injection: false
+  route: APPROVAL   # AUTO | APPROVAL | CLARIFY | CLOSED | INVESTIGATE

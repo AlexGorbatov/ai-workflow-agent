@@ -1,0 +1,32 @@
+# Labelled by hand from the email text. draft: true until a person has checked the labels.
+id: n09-pl-poznan
+draft: true
+category: normal
+note: "Polish case endings (Poznania, Hamburga)"
+email:
+  from: anna.kowalska@polmarket.test
+  subject: "Zapytanie: Poznań - Hamburg"
+  body: |
+    Dzień dobry,
+
+    prosimy o wycenę: 10 palet żywności w opakowaniach, łącznie 5 400 kg,
+    z Poznania do Hamburga. Odbiór 16 października 2026.
+
+    Pozdrawiam,
+    Anna Kowalska
+fixtures:
+  customer: GOLD   # GOLD | STANDARD | NEW | CREDIT_HOLD | AMBIGUOUS (what Enrich would find)
+  cost: 600   # carrier cost the rates would return, EUR
+expect:
+  intent: QUOTE_REQUEST
+  fields:   # a list means any of these spellings is right
+    origin: ["Poznań", "Poznan"]
+    destination: "Hamburg"
+    weightKg: 5400
+    pallets: 10
+    pickupDate: "2026-10-16"
+    language: "pl"
+    dangerous: false
+  missing: []
+  injection: false
+  route: AUTO   # AUTO | APPROVAL | CLARIFY | CLOSED | INVESTIGATE
