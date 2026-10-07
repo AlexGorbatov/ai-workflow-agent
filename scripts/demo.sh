@@ -4,11 +4,20 @@
 # emails. Sends the samples and prints where to look. Ctrl-C stops the apps; `docker compose down` the rest.
 #
 #   scripts/demo.sh                 # demo model, no key needed
-#   LM_STUDIO=1 LMSTUDIO_MODEL=<id> scripts/demo.sh   # a real local model through LM Studio
+#   LM_STUDIO=1 scripts/demo.sh     # a real local model through LM Studio (default qwen3-coder-30b-a3b-it-heretic-i1,
+#                                   # another one: LMSTUDIO_MODEL=<id>)
 #
 # Needs Docker (with compose v2) and JDK 25. Logs go to target/demo/.
 set -euo pipefail
 cd "$(dirname "$0")/.."
+
+# Port overrides from .env (compose reads it itself; the apps and these scripts do not).
+if [[ -f .env ]]; then
+  set -a
+  # shellcheck disable=SC1091
+  . ./.env
+  set +a
+fi
 
 export POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-workflow}"
 # The agent signs approval tokens with it, the mock CRM verifies them. A fixed value is fine for a local demo only.
@@ -16,7 +25,8 @@ export APPROVAL_TOKEN_SECRET="${APPROVAL_TOKEN_SECRET:-demo-only-approval-secret
 export DEMO=1
 
 LOGS=target/demo
-MAILPIT=http://localhost:8025
+MAILPIT="http://localhost:${MAILPIT_UI_PORT:-8025}"
+export MAILPIT_API_URL="$MAILPIT"
 PIDS=()
 
 say() { printf '\n\033[1m==> %s\033[0m\n' "$*"; }

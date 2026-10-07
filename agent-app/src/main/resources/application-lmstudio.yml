@@ -10,4 +10,4 @@ spring:
       api-key: not-used-by-lm-studio
       chat:
         options:
-          model: ${LMSTUDIO_MODEL}
+          model: ${LMSTUDIO_MODEL:""}

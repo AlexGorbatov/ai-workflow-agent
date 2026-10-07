@@ -61,8 +61,8 @@ mock CRM, the mock carrier rates and the agent with the `demo` profile, sends th
 
 In the demo the model is a canned one that knows the samples, and the timers run in seconds: a clarification
 expires after 2 minutes, an approval escalates after 2 minutes, a quote gets its reminder after 60 seconds.
-A real local model works too: `LM_STUDIO=1 LMSTUDIO_MODEL=<id> ./scripts/demo.sh` (LM Studio's server on
-port 1234). `Ctrl-C` stops the apps, `docker compose down` the infrastructure.
+A real local model works too: `LM_STUDIO=1 ./scripts/demo.sh` (LM Studio's server on
+port 1234; the model defaults to `qwen3-coder-30b-a3b-it-heretic-i1`, override it with `LMSTUDIO_MODEL=<id>`). `Ctrl-C` stops the apps, `docker compose down` the infrastructure.
 
 | Approval with a briefing and the price breakdown | Grafana dashboard |
 |---|---|
@@ -175,15 +175,45 @@ The labels are still drafts awaiting review.
 
 ## Run it against a real model
 
+Terminal 1: build (all tests; `install` rather than `verify`, so the `-pl` runs below find `approval-token`) and
+start the infrastructure (Postgres, Keycloak, Mailpit, Grafana LGTM).
+
 ```bash
-./mvnw verify                                   # build + all tests (Testcontainers)
-docker compose up -d                            # Postgres, Keycloak, Mailpit, Grafana LGTM
-export POSTGRES_PASSWORD=workflow APPROVAL_TOKEN_SECRET=$(openssl rand -base64 32)
-./mvnw -pl mock-crm-mcp spring-boot:run         # :8091
-./mvnw -pl mock-rates spring-boot:run           # :8092
+./mvnw install
+docker compose up -d --wait
+```
+
+The three apps run in the foreground, one terminal each. Every terminal first loads the same settings: `.env`
+(Spring Boot does not read it; it matters when you moved a port there) and one shared secret, which agent-app
+signs approval tokens with and mock-crm-mcp verifies.
+
+```bash
+set -a; [ -f .env ] && . ./.env; set +a
+export POSTGRES_PASSWORD=workflow APPROVAL_TOKEN_SECRET=local-dev-approval-secret-change-me
+```
+
+Terminal 2 (:8091), terminal 3 (:8092), terminal 4 (needs a model: `OPENAI_API_KEY`, or LM Studio, see below):
+
+```bash
+./mvnw -pl mock-crm-mcp spring-boot:run
+```
+
+```bash
+./mvnw -pl mock-rates spring-boot:run
+```
+
+```bash
 OPENAI_API_KEY=... ./mvnw -pl agent-app spring-boot:run
+```
+
+Then, in any terminal that has loaded the settings above:
+
+```bash
 scripts/send-samples.sh
 ```
+
+Do not paste trailing `# comments` after these commands into zsh: it does not treat `#` as a comment in an
+interactive shell, and Maven fails with `No plugin found for prefix`.
 
 `./mvnw -pl agent-app spring-boot:test-run` starts the agent alone with Testcontainers and the stub model, for
 poking at the API. To work on the console with hot reload, run `npm install && npm run dev` in `operator-ui/`

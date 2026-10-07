@@ -80,6 +80,9 @@ workflow:
   # Every working state must have its step: startup fails if one goes missing.
   registry:
     require-all-states: true
+  # REST API of the mailbox the agent reads, and the address customers write to.
+  mail:
+    mailpit-url: ${MAILPIT_API_URL:http://localhost:8025}
   # How long to wait for the customer after the quote, and again after the one reminder.
   follow-up:
     after: ${FOLLOW_UP_AFTER:72h}
